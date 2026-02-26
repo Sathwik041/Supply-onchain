@@ -12,7 +12,30 @@ import { Header } from "~~/components/Header";
 import { BlockieAvatar } from "~~/components/scaffold-eth";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 
+import { useAccount } from "wagmi";
+import { useRouter, usePathname } from "next/navigation";
+
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
+  const { address } = useAccount();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [prevAddress, setPrevAddress] = useState<string | undefined>(address);
+
+  useEffect(() => {
+    // Define routes that require a connected wallet
+    const privateRoutes = ["/create", "/orders", "/arbitration"];
+    const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
+
+    // Handle account change or disconnection
+    if (prevAddress !== address) {
+      if (isPrivateRoute) {
+        // Force redirect to home if on a private page
+        window.location.href = "/";
+      }
+    }
+    setPrevAddress(address);
+  }, [address, prevAddress, pathname]);
+
   return (
     <>
       <div className={`flex flex-col min-h-screen `}>

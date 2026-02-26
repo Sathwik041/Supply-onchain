@@ -14,62 +14,48 @@ const Home: NextPage = () => {
 
   return (
     <>
-      <div className="flex items-center flex-col grow pt-10">
-        <div className="px-5">
-          <h1 className="text-center">
-            <span className="block text-2xl mb-2">Welcome to</span>
-            <span className="block text-4xl font-bold">Scaffold-ETH 2</span>
+      <div className="flex items-center flex-col grow pt-10 px-4">
+        <div className="max-w-4xl text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
+            SUPPLYCHAIN <span className="text-primary text-3xl md:text-5xl block mt-2">The Gold Standard for Industrial Escrow</span>
           </h1>
-          <div className="flex justify-center items-center space-x-2 flex-col">
-            <p className="my-2 font-medium">Connected Address:</p>
-            <Address
-              address={connectedAddress}
-              chain={targetNetwork}
-              blockExplorerAddressLink={
-                targetNetwork.id === hardhat.id ? `/blockexplorer/address/${connectedAddress}` : undefined
-              }
-            />
+          
+          <div className="mb-10 text-xl md:text-2xl text-base-content/80 space-y-4">
+            <p>
+              A robust, smart-contract-driven protocol designed to eliminate counterparty risk in global manufacturing and logistics.
+            </p>
+            <p className="font-semibold text-primary/90">
+              30% Initial Production &bull; 50% Verified Delivery &bull; 20% Final Inspection
+            </p>
           </div>
 
-          <p className="text-center text-lg">
-            Get started by editing{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/nextjs/app/page.tsx
-            </code>
-          </p>
-          <p className="text-center text-lg">
-            Edit your smart contract{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              YourContract.sol
-            </code>{" "}
-            in{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/hardhat/contracts
-            </code>
-          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
+            <Link href="/dashboard" className="btn btn-primary btn-lg px-12 text-xl shadow-lg hover:scale-105 transition-transform">
+              Get Started
+            </Link>
+            <Link href="/about" className="btn btn-outline btn-lg px-12 text-xl hover:bg-primary/10">
+              Learn More
+            </Link>
+          </div>
         </div>
 
-        <div className="grow bg-base-300 w-full mt-16 px-8 py-12">
-          <div className="flex justify-center items-center gap-12 flex-col md:flex-row">
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <BugAntIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Tinker with your smart contract using the{" "}
-                <Link href="/debug" passHref className="link">
-                  Debug Contracts
-                </Link>{" "}
-                tab.
-              </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-4 max-w-6xl w-full px-4 mb-20">
+          <div className="card bg-base-100 shadow-xl border border-secondary hover:scale-105 transition-transform">
+            <div className="card-body">
+              <h2 className="card-title text-primary">📦 For Buyers</h2>
+              <p>Secure your industrial orders. Pay in milestones as the production and shipping progresses. Full control over delivery confirmation.</p>
             </div>
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <MagnifyingGlassIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Explore your local transactions with the{" "}
-                <Link href="/blockexplorer" passHref className="link">
-                  Block Explorer
-                </Link>{" "}
-                tab.
-              </p>
+          </div>
+          <div className="card bg-base-100 shadow-xl border border-secondary hover:scale-105 transition-transform">
+            <div className="card-body">
+              <h2 className="card-title text-primary">⚙️ For Sellers</h2>
+              <p>Get upfront production costs. Receive payments automatically upon shipping and delivery confirmation. Protected by smart contract escrow.</p>
+            </div>
+          </div>
+          <div className="card bg-base-100 shadow-xl border border-secondary hover:scale-105 transition-transform">
+            <div className="card-body">
+              <h2 className="card-title text-primary">⚖️ For Arbitrators</h2>
+              <p>A neutral ground to resolve disputes in the supply chain. Review milestones and evidence to release funds fairly.</p>
             </div>
           </div>
         </div>
