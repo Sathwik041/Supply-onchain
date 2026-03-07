@@ -12,9 +12,6 @@ import {
   ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
   CubeIcon,
-  DocumentMagnifyingGlassIcon,
-  IdentificationIcon,
-  ShieldCheckIcon,
   ShoppingBagIcon,
 } from "@heroicons/react/24/outline";
 import deployedContracts from "~~/contracts/deployedContracts";
@@ -30,11 +27,6 @@ interface Order {
   createdAt: bigint;
 }
 
-interface PassportNFT {
-  tokenId: number;
-  uri: string;
-}
-
 const ViewOrders: NextPage = () => {
   const { address: connectedAddress } = useAccount();
   const router = useRouter();
@@ -42,14 +34,7 @@ const ViewOrders: NextPage = () => {
   const { targetNetwork } = useTargetNetwork();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [passports, setPassports] = useState<PassportNFT[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Fetch passport contract address
-  const { data: passportContractAddress } = useScaffoldReadContract({
-    contractName: "EscrowFactory",
-    functionName: "passportContract",
-  });
 
   // Fetch escrows where user is buyer
   const { data: buyerEscrows } = useScaffoldReadContract({
@@ -143,50 +128,7 @@ const ViewOrders: NextPage = () => {
     };
 
     fetchOrderDetails();
-  }, [allEscrowAddresses, publicClient]);
-
-  // Fetch Owned NFTs
-  useEffect(() => {
-    const fetchPassports = async () => {
-      if (!passportContractAddress || !connectedAddress || !publicClient) return;
-
-      const chainId = publicClient.chain.id;
-      const machinePassportAbi = (deployedContracts as any)[chainId].MachinePassport.abi;
-
-      try {
-        const balance = await publicClient.readContract({
-          address: passportContractAddress as `0x${string}`,
-          abi: machinePassportAbi,
-          functionName: "balanceOf",
-          args: [connectedAddress],
-        });
-
-        const nftData: PassportNFT[] = [];
-        for (let i = 0; i < Number(balance); i++) {
-          const tokenId = await publicClient.readContract({
-            address: passportContractAddress as `0x${string}`,
-            abi: machinePassportAbi,
-            functionName: "tokenOfOwnerByIndex",
-            args: [connectedAddress, BigInt(i)],
-          });
-
-          const uri = await publicClient.readContract({
-            address: passportContractAddress as `0x${string}`,
-            abi: machinePassportAbi,
-            functionName: "tokenURI",
-            args: [tokenId],
-          });
-
-          nftData.push({ tokenId: Number(tokenId), uri: uri as string });
-        }
-        setPassports(nftData);
-      } catch (error) {
-        console.error("Error fetching passports:", error);
-      }
-    };
-
-    fetchPassports();
-  }, [passportContractAddress, connectedAddress, publicClient]);
+  }, [allEscrowAddresses, publicClient, setOrders]);
 
   const getStatusLabel = (status: number) => {
     const labels = [
@@ -205,75 +147,6 @@ const ViewOrders: NextPage = () => {
   return (
     <div className="flex flex-col grow bg-base-200 pb-20">
       <div className="max-w-7xl w-full mx-auto px-4 mt-8">
-        {/* Passports Section */}
-        {passports.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-black text-secondary mb-6 flex items-center gap-3">
-              <IdentificationIcon className="h-7 w-7" />
-              My Machine Passports
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {passports.map(nft => {
-                const blockExplorerBase = targetNetwork.blockExplorers?.default.url;
-                const blockExplorerLink = blockExplorerBase
-                  ? `${blockExplorerBase}/address/${passportContractAddress}`
-                  : null;
-
-                return (
-                  <div
-                    key={nft.tokenId}
-                    className="card bg-base-100 shadow-xl border-t-4 border-t-secondary rounded-sm overflow-hidden group hover:shadow-2xl transition-all"
-                  >
-                    <div className="card-body p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-secondary/10 rounded-lg text-secondary group-hover:bg-secondary group-hover:text-white transition-colors">
-                          <ShieldCheckIcon className="h-8 w-8" />
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] uppercase font-black opacity-40 leading-none mb-1">Passport ID</p>
-                          <p className="text-lg font-mono font-black">#00{nft.tokenId}</p>
-                        </div>
-                      </div>
-                      <h3 className="text-xl font-black mb-1 leading-tight">Industrial Machine Asset</h3>
-                      <div className="badge badge-secondary badge-outline font-bold text-[10px] uppercase px-2 py-2 mb-4">
-                        Verified Proof-of-Specs
-                      </div>
-
-                      <div className="border-t border-base-200 pt-4 mt-2 flex flex-col gap-3">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase opacity-40">Specs:</span>
-                            <span className="text-[10px] font-mono opacity-60">{nft.uri.slice(0, 12)}...</span>
-                          </div>
-                          <a
-                            href={`https://gateway.pinata.cloud/ipfs/${nft.uri}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn btn-secondary btn-xs rounded-sm gap-1"
-                          >
-                            <DocumentMagnifyingGlassIcon className="h-3 w-3" /> View PO
-                          </a>
-                        </div>
-
-                        {blockExplorerLink && (
-                          <a
-                            href={blockExplorerLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn btn-outline btn-secondary btn-xs rounded-sm gap-1 w-full"
-                          >
-                            <ArrowTopRightOnSquareIcon className="h-3 w-3" /> View on Explorer
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
             <ShoppingBagIcon className="h-8 w-8" />

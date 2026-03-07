@@ -8,6 +8,7 @@ import { hardhat } from "viem/chains";
 import {
   Bars3Icon,
   HomeIcon,
+  IdentificationIcon,
   InformationCircleIcon,
   PlusCircleIcon,
   QuestionMarkCircleIcon,
@@ -37,6 +38,11 @@ export const menuLinks: HeaderMenuLink[] = [
     label: "Arbitration",
     href: "/arbitration",
     icon: <ShieldCheckIcon className="h-4 w-4" />,
+  },
+  {
+    label: "Machine Passports",
+    href: "/machine-passports",
+    icon: <IdentificationIcon className="h-4 w-4" />,
   },
   {
     label: "About",
