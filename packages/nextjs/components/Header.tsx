@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { hardhat } from "viem/chains";
 import {
   Bars3Icon,
-  BugAntIcon,
   HomeIcon,
   InformationCircleIcon,
   PlusCircleIcon,
@@ -48,11 +47,6 @@ export const menuLinks: HeaderMenuLink[] = [
     label: "FAQs",
     href: "/faqs",
     icon: <QuestionMarkCircleIcon className="h-4 w-4" />,
-  },
-  {
-    label: "Debug Contracts",
-    href: "/debug",
-    icon: <BugAntIcon className="h-4 w-4" />,
   },
 ];
 
