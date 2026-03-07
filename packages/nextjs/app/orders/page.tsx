@@ -35,6 +35,7 @@ const ViewOrders: NextPage = () => {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
 
   // Fetch escrows where user is buyer
   const { data: buyerEscrows } = useScaffoldReadContract({
@@ -132,22 +133,33 @@ const ViewOrders: NextPage = () => {
 
   const getStatusLabel = (status: number) => {
     const labels = [
-      "Created",
-      "Accepted",
-      "In Production",
-      "Shipped",
-      "Delivered",
-      "Completed",
-      "Disputed",
-      "Cancelled",
+      "Created", // 0
+      "Accepted", // 1
+      "In Production", // 2
+      "Production Completed", // 3
+      "Shipped", // 4
+      "Delivered", // 5
+      "Completed", // 6
+      "Disputed", // 7
+      "Refunded/Cancelled", // 8
     ];
     return labels[status] || "Unknown";
   };
 
+  const filteredOrders = useMemo(() => {
+    return orders
+      .filter(order => {
+        // Status 6 (Completed) and 8 (Refunded/Cancelled) go to Completed tab
+        const isCompleted = order.status === 6 || order.status === 8;
+        return activeTab === "completed" ? isCompleted : !isCompleted;
+      })
+      .sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
+  }, [orders, activeTab]);
+
   return (
     <div className="flex flex-col grow bg-base-200 pb-20">
       <div className="max-w-7xl w-full mx-auto px-4 mt-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
             <ShoppingBagIcon className="h-8 w-8" />
             My Escrow Orders
@@ -157,11 +169,27 @@ const ViewOrders: NextPage = () => {
           </Link>
         </div>
 
+        {/* Tabs */}
+        <div className="tabs tabs-boxed bg-base-100 mb-8 max-w-sm rounded-sm p-1 border border-secondary/20">
+          <button
+            className={`tab flex-1 font-bold rounded-sm ${activeTab === "active" ? "tab-active bg-primary text-primary-content" : ""}`}
+            onClick={() => setActiveTab("active")}
+          >
+            Active Orders
+          </button>
+          <button
+            className={`tab flex-1 font-bold rounded-sm ${activeTab === "completed" ? "tab-active bg-primary text-primary-content" : ""}`}
+            onClick={() => setActiveTab("completed")}
+          >
+            Completed
+          </button>
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
             <ArrowPathIcon className="h-12 w-12 animate-spin text-primary opacity-50" />
           </div>
-        ) : orders.length === 0 ? (
+        ) : filteredOrders.length === 0 ? (
           <div className="card bg-base-100 shadow-xl border border-secondary/20 p-20 text-center rounded-sm">
             <div className="flex justify-center mb-6">
               <CubeIcon className="h-16 w-16 opacity-10" />
@@ -172,7 +200,7 @@ const ViewOrders: NextPage = () => {
                 ? "You are not involved in any escrow contracts yet."
                 : "Please connect your wallet to view your orders."}
             </p>
-            <div className="mt-8">
+            <div className="mt-8 flex justify-center gap-4">
               <Link href="/create" className="btn btn-outline btn-primary px-8 rounded-sm">
                 Create Your First Escrow
               </Link>
@@ -180,7 +208,7 @@ const ViewOrders: NextPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {orders.map(order => {
+            {filteredOrders.map(order => {
               const isExpired = order.status === 0 && Date.now() / 1000 > Number(order.createdAt) + 86400;
 
               return (
@@ -201,7 +229,7 @@ const ViewOrders: NextPage = () => {
                               {order.item}
                             </h3>
                             <div
-                              className={`badge ${order.status === 4 ? "badge-success" : order.status === 7 || isExpired ? "badge-error" : "badge-info"} badge-xs gap-1 py-2 px-2 text-[10px] uppercase font-black rounded-sm`}
+                              className={`badge ${order.status === 6 || order.status === 4 || order.status === 5 ? "badge-success" : order.status === 7 || order.status === 8 || isExpired ? "badge-error" : "badge-info"} badge-xs gap-1 py-2 px-2 text-[10px] uppercase font-black rounded-sm`}
                             >
                               {isExpired ? "Expired" : getStatusLabel(order.status)}
                             </div>

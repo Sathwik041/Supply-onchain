@@ -49,7 +49,7 @@ const deploySupplyChainEscrow: DeployFunction = async function (hre: HardhatRunt
   // 4. Transfer ownership of MachinePassport to EscrowFactory
   const machinePassport = await hre.ethers.getContractAt("MachinePassport", machinePassportDeployment.address);
   const currentOwner = await machinePassport.owner();
-  
+
   if (currentOwner.toLowerCase() !== escrowFactoryDeployment.address.toLowerCase()) {
     console.log("Transfereing ownership of MachinePassport to EscrowFactory...");
     const transferTx = await machinePassport.transferOwnership(escrowFactoryDeployment.address, {

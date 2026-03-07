@@ -50,19 +50,13 @@ contract EscrowFactory {
             _deliveryDurationSeconds,
             _poCid
         );
-        
+
         allEscrows.push(escrowAddress);
         buyerToEscrows[msg.sender].push(escrowAddress);
         sellerToEscrows[_seller].push(escrowAddress);
         isEscrow[escrowAddress] = true;
 
-        emit EscrowCreated(
-            escrowAddress,
-            msg.sender,
-            _seller,
-            _itemName,
-            _totalAmount
-        );
+        emit EscrowCreated(escrowAddress, msg.sender, _seller, _itemName, _totalAmount);
 
         return escrowAddress;
     }

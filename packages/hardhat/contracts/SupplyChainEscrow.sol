@@ -9,16 +9,15 @@ interface IEscrowFactory {
 }
 
 contract SupplyChainEscrow is ReentrancyGuard, Initializable {
-
     address public buyer;
     address public seller;
     address public arbitrator;
     address public factory;
 
-    uint256 public totalAmount;      // in wei
+    uint256 public totalAmount; // in wei
     uint256 public productionAmount; // 30% of totalAmount
     uint256 public AfterDeliverAmount; //50% of totalAmount
-    uint256 public remainingAmount;  // 20% of totalAmount
+    uint256 public remainingAmount; // 20% of totalAmount
 
     string public itemName;
     uint256 public quantity;
@@ -54,7 +53,7 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
 
     Status public status;
 
-    // EVENTS 
+    // EVENTS
 
     event EscrowCreated(
         address indexed buyer,
@@ -75,7 +74,7 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
     event DisputeResolved(bool releasedToSeller);
     event ContractCancelled(address indexed buyer);
 
-    //  MODIFIERS 
+    //  MODIFIERS
 
     modifier onlyBuyer() {
         require(msg.sender == buyer, "Not buyer");
@@ -109,7 +108,7 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         address _buyer,
         address _seller,
         address _arbitrator,
-        uint256 _totalAmount,              // in wei (e.g., 0.1 MON = 100000000000000000)
+        uint256 _totalAmount, // in wei (e.g., 0.1 MON = 100000000000000000)
         string memory _itemName,
         uint256 _quantity,
         uint256 _deliveryDurationSeconds,
@@ -141,7 +140,7 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         emit EscrowCreated(_buyer, _seller, address(this), _totalAmount, _poCid);
     }
 
-    //  CORE FLOW 
+    //  CORE FLOW
 
     /// Seller accepts the terms and PO
     function acceptContract() external onlySeller {
@@ -153,12 +152,7 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
     }
 
     /// Buyer deposits MON and starts production
-    function depositAndStartProduction() 
-        external 
-        payable 
-        onlyBuyer 
-        nonReentrant 
-    {
+    function depositAndStartProduction() external payable onlyBuyer nonReentrant {
         require(sellerAccepted, "Seller must accept first");
         require(!deposited, "Already deposited");
         require(msg.value == totalAmount, "Send exact totalAmount");
@@ -170,9 +164,9 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         remainingAmount = totalAmount - amount;
         deposited = true;
         status = Status.IN_PRODUCTION;
-        
+
         // Release 30% to seller immediately
-        (bool sent, ) = seller.call{value: amount}("");
+        (bool sent, ) = seller.call{ value: amount }("");
         require(sent, "Failed to send production payment");
 
         emit ProductionPaymentReleased(amount);
@@ -194,20 +188,16 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         require(block.timestamp > deliveryDeadline, "Deadline not passed");
         require(!shipped, "Already shipped");
         require(deposited, "Not funded");
-        uint256 amount= remainingAmount;
+        uint256 amount = remainingAmount;
         remainingAmount = 0;
         status = Status.REFUNDED;
-        
-        (bool sent, ) = buyer.call{value: amount}("");
-        require(sent, "Transfer failed");
 
+        (bool sent, ) = buyer.call{ value: amount }("");
+        require(sent, "Transfer failed");
     }
 
     //Seller claim if buyer didnot respond after shipping
-        function sellerClaimAfterDeadline()
-        external
-        onlySeller notDisputed nonReentrant 
-    {
+    function sellerClaimAfterDeadline() external onlySeller notDisputed nonReentrant {
         require(shipped, "Not shipped");
         require(!completed, "Already completed");
         require(!disputed, "Under dispute");
@@ -218,10 +208,9 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         completed = true;
         status = Status.COMPLETED;
 
-        (bool sent, ) = seller.call{value: amount}("");
+        (bool sent, ) = seller.call{ value: amount }("");
         require(sent, "Transfer failed");
     }
-
 
     //Cancel contract before Deposit or Acceptance
     function cancelContract() external {
@@ -234,18 +223,13 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         emit ContractCancelled(msg.sender);
     }
 
-
     /// Seller marks the item as shipped
     function markShipped(
         string memory _shippingProvider,
         string memory _trackingNumber,
         string memory _shippingCid,
         string[] memory _productionLogs
-    ) 
-        external 
-        onlySeller 
-        notDisputed 
-    {
+    ) external onlySeller notDisputed {
         require(status == Status.PRODUCTION_COMPLETED, "Production must be finished first");
         require(!shipped, "Already shipped");
         require(bytes(_trackingNumber).length > 0, "Tracking required");
@@ -267,33 +251,25 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
     }
 
     /// Buyer confirms delivery and releases 50% of remaining
-    function confirmDelivery() 
-        external 
-        onlyBuyer 
-        nonReentrant 
-        notDisputed 
-    {
+    function confirmDelivery() external onlyBuyer nonReentrant notDisputed {
         require(shipped, "Not shipped");
         require(!delivered, "Already Delivered");
 
-         uint256 amount = (totalAmount * 50) / 100;
+        uint256 amount = (totalAmount * 50) / 100;
         AfterDeliverAmount = amount;
-        remainingAmount = remainingAmount - amount ;
+        remainingAmount = remainingAmount - amount;
         delivered = true;
         deliveredAt = block.timestamp;
         status = Status.DELIVERED;
-        
 
-        (bool sent, ) = seller.call{value: amount}("");
+        (bool sent, ) = seller.call{ value: amount }("");
         require(sent, "Failed to send after deliver payment");
 
-         emit AfterDeliverPaymentReleased(amount);
-
+        emit AfterDeliverPaymentReleased(amount);
     }
 
-    ///Buyer Completes contract after checking the machine/item are working 
-    function buyerCompletecontract () external onlyBuyer nonReentrant {
-
+    ///Buyer Completes contract after checking the machine/item are working
+    function buyerCompletecontract() external onlyBuyer nonReentrant {
         require(delivered, "Item not yet delivered");
         require(!completed, "Contract already completed");
 
@@ -302,16 +278,14 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         completed = true;
         status = Status.COMPLETED;
 
-                (bool sent, ) = seller.call{value: amount}("");
-                require(sent, "Failed to send final payment");
-        
-                // Mint Digital Passport NFT to buyer
-                IEscrowFactory(factory).mintPassport(buyer, poCid);
-        
-                emit FinalPaymentReleased(amount);
-            }
-        
+        (bool sent, ) = seller.call{ value: amount }("");
+        require(sent, "Failed to send final payment");
 
+        // Mint Digital Passport NFT to buyer
+        IEscrowFactory(factory).mintPassport(buyer, poCid);
+
+        emit FinalPaymentReleased(amount);
+    }
 
     /// Seller claims remaining funds if buyer doesn't complete or dispute within 14 days of delivery
     function sellerClaimFinalPayment() external onlySeller notDisputed nonReentrant {
@@ -324,7 +298,7 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         completed = true;
         status = Status.COMPLETED;
 
-        (bool sent, ) = seller.call{value: amount}("");
+        (bool sent, ) = seller.call{ value: amount }("");
         require(sent, "Transfer failed");
 
         // Mint Digital Passport NFT to buyer
@@ -333,13 +307,10 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         emit FinalPaymentReleased(amount);
     }
 
-    //  DISPUTE 
+    //  DISPUTE
 
     function raiseDispute(string memory _reasonCid) external {
-        require(
-            msg.sender == buyer || msg.sender == seller,
-            "Not authorized"
-        );
+        require(msg.sender == buyer || msg.sender == seller, "Not authorized");
         require(!completed, "Already completed");
 
         disputed = true;
@@ -349,34 +320,28 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         emit DisputeRaised(msg.sender);
     }
 
-    function resolveDispute(bool releaseToSeller)
-        external
-        onlyArbitrator
-        nonReentrant
-    {
+    function resolveDispute(bool releaseToSeller) external onlyArbitrator nonReentrant {
         require(disputed, "No dispute");
         uint256 amount = remainingAmount;
         require(amount > 0, "No funds to release");
-   
-        
+
         remainingAmount = 0;
         disputed = false;
 
         if (releaseToSeller) {
             completed = true;
             status = Status.COMPLETED;
-            (bool sent, ) = seller.call{value: amount}("");
+            (bool sent, ) = seller.call{ value: amount }("");
             require(sent, "Failed to send to seller");
         } else {
             status = Status.REFUNDED;
-            (bool sent, ) = buyer.call{value: amount}("");
+            (bool sent, ) = buyer.call{ value: amount }("");
             require(sent, "Failed to refund buyer");
         }
-
 
         emit DisputeResolved(releaseToSeller);
     }
 
-    //  FALLBACK 
+    //  FALLBACK
     receive() external payable {} // Allow contract to receive MON directly
 }
