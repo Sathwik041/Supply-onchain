@@ -9,7 +9,6 @@ describe("SupplyChainEscrow via Factory", function () {
   let buyer: SignerWithAddress;
   let seller: SignerWithAddress;
   let arbitrator: SignerWithAddress;
-  let otherAccount: SignerWithAddress;
 
   const totalAmount = ethers.parseEther("1.0");
   const itemName = "Mechanical Industrial Machine";
@@ -18,7 +17,7 @@ describe("SupplyChainEscrow via Factory", function () {
   const poCid = "QmTest123";
 
   beforeEach(async () => {
-    [buyer, seller, arbitrator, otherAccount] = await ethers.getSigners();
+    [buyer, seller, arbitrator] = await ethers.getSigners();
 
     const MachinePassportFactory = await ethers.getContractFactory("MachinePassport");
     const machinePassport = await MachinePassportFactory.deploy();
@@ -31,30 +30,25 @@ describe("SupplyChainEscrow via Factory", function () {
     const EscrowFactoryFactory = await ethers.getContractFactory("EscrowFactory");
     escrowFactory = await EscrowFactoryFactory.deploy(
       await machinePassport.getAddress(),
-      await supplyChainEscrowImplementation.getAddress()
+      await supplyChainEscrowImplementation.getAddress(),
     );
     await escrowFactory.waitForDeployment();
 
     // Transfer ownership to factory
     await machinePassport.transferOwnership(await escrowFactory.getAddress());
 
-    const tx = await escrowFactory.connect(buyer).createEscrow(
-      seller.address,
-      arbitrator.address,
-      totalAmount,
-      itemName,
-      quantity,
-      deliveryDuration,
-      poCid
-    );
+    const tx = await escrowFactory
+      .connect(buyer)
+      .createEscrow(seller.address, arbitrator.address, totalAmount, itemName, quantity, deliveryDuration, poCid);
     const receipt = await tx.wait();
-    
-    const event = receipt?.logs.find(
-      (log) => (log as any).fragment?.name === "EscrowCreated"
-    ) as any;
+
+    const event = receipt?.logs.find(log => (log as any).fragment?.name === "EscrowCreated") as any;
     const escrowAddress = event.args.escrowAddress;
-    
-    supplyChainEscrow = await ethers.getContractAt("SupplyChainEscrow", escrowAddress) as unknown as SupplyChainEscrow;
+
+    supplyChainEscrow = (await ethers.getContractAt(
+      "SupplyChainEscrow",
+      escrowAddress,
+    )) as unknown as SupplyChainEscrow;
   });
 
   describe("Full Lifecycle", function () {
@@ -64,11 +58,12 @@ describe("SupplyChainEscrow via Factory", function () {
 
       // 2. Deposit
       const productionAmount = (totalAmount * 30n) / 100n;
-      await expect(supplyChainEscrow.connect(buyer).depositAndStartProduction({ value: totalAmount }))
-        .to.changeEtherBalances(
-          [buyer, seller, supplyChainEscrow],
-          [-totalAmount, productionAmount, totalAmount - productionAmount]
-        );
+      await expect(
+        supplyChainEscrow.connect(buyer).depositAndStartProduction({ value: totalAmount }),
+      ).to.changeEtherBalances(
+        [buyer, seller, supplyChainEscrow],
+        [-totalAmount, productionAmount, totalAmount - productionAmount],
+      );
 
       // 3. Finish Production
       await supplyChainEscrow.connect(seller).finishProduction();
@@ -78,20 +73,18 @@ describe("SupplyChainEscrow via Factory", function () {
 
       // 5. Deliver
       const afterDeliverAmount = (totalAmount * 50n) / 100n;
-      await expect(supplyChainEscrow.connect(buyer).confirmDelivery())
-        .to.changeEtherBalances(
-          [seller, supplyChainEscrow],
-          [afterDeliverAmount, -afterDeliverAmount]
-        );
+      await expect(supplyChainEscrow.connect(buyer).confirmDelivery()).to.changeEtherBalances(
+        [seller, supplyChainEscrow],
+        [afterDeliverAmount, -afterDeliverAmount],
+      );
 
       // 6. Complete
       const remainingAmount = await supplyChainEscrow.remainingAmount();
-      await expect(supplyChainEscrow.connect(buyer).buyerCompletecontract())
-        .to.changeEtherBalances(
-          [seller, supplyChainEscrow],
-          [remainingAmount, -remainingAmount]
-        );
-      
+      await expect(supplyChainEscrow.connect(buyer).buyerCompletecontract()).to.changeEtherBalances(
+        [seller, supplyChainEscrow],
+        [remainingAmount, -remainingAmount],
+      );
+
       // Verify NFT Minting
       const passportAddress = await escrowFactory.passportContract();
       const passportContract = await ethers.getContractAt("MachinePassport", passportAddress);
@@ -109,12 +102,11 @@ describe("SupplyChainEscrow via Factory", function () {
       await supplyChainEscrow.connect(buyer).raiseDispute("QmDisputeReason");
       const amount = await supplyChainEscrow.remainingAmount();
 
-      await expect(supplyChainEscrow.connect(arbitrator).resolveDispute(false))
-        .to.changeEtherBalances(
-          [buyer, supplyChainEscrow],
-          [amount, -amount]
-        );
-      
+      await expect(supplyChainEscrow.connect(arbitrator).resolveDispute(false)).to.changeEtherBalances(
+        [buyer, supplyChainEscrow],
+        [amount, -amount],
+      );
+
       expect(await supplyChainEscrow.status()).to.equal(8); // Status.REFUNDED
     });
   });

@@ -12,10 +12,13 @@ import "hardhat-deploy-ethers";
 import { task } from "hardhat/config";
 import generateTsAbis from "./scripts/generateTsAbis";
 
+const deployerPrivateKey = process.env.PRIVATE_KEY
+  ? process.env.PRIVATE_KEY.startsWith("0x")
+    ? process.env.PRIVATE_KEY
+    : `0x${process.env.PRIVATE_KEY}`
+  : "";
 
-const deployerPrivateKey = process.env.PRIVATE_KEY ? `0x${process.env.PRIVATE_KEY}` : "";
-
-const monadRpcUrl = process.env.ALCHEMY_TESTNET_URL || "https://testnet.monadvision.com";
+const monadRpcUrl = process.env.ALCHEMY_TESTNET_URL || "https://testnet-rpc.monad.xyz";
 
 const config: HardhatUserConfig = {
   solidity: {

@@ -42,9 +42,25 @@ export const getAlchemyHttpUrl = (chainId: number) => {
     : undefined;
 };
 
+export const monadTestnet = {
+  id: 10143,
+  name: "Monad Testnet",
+  nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
+  rpcUrls: {
+    default: { http: ["https://monad-testnet.g.alchemy.com/v2/E7i9vdsCC8gVkU0Bh0Km-"] },
+    public: { http: ["https://monad-testnet.g.alchemy.com/v2/E7i9vdsCC8gVkU0Bh0Km-"] },
+  },
+  blockExplorers: {
+    default: { name: "Monad Explorer", url: "https://testnet.monadexplorer.com" },
+  },
+} as const satisfies chains.Chain;
+
 export const NETWORKS_EXTRA_DATA: Record<string, ChainAttributes> = {
   [chains.hardhat.id]: {
     color: "#b8af0c",
+  },
+  [monadTestnet.id]: {
+    color: "#836ef9",
   },
   [chains.mainnet.id]: {
     color: "#ff8b9e",

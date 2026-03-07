@@ -21,3 +21,12 @@ node_modules
 
 # cli
 dist
+
+# AI and Local IDE Context
+.agents/
+.claude/
+.cursor/
+mcp.json
+opencode.json
+AGENTS.md
+CLAUDE.md

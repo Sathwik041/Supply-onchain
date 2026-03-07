@@ -1,37 +1,31 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Address } from "@scaffold-ui/components";
 import type { NextPage } from "next";
-import { useAccount, usePublicClient } from "wagmi";
-import { parseEther, formatEther } from "viem";
-import { useTransactor, useScaffoldWriteContract, useScaffoldReadContract } from "~~/hooks/scaffold-eth";
-import deployedContracts from "~~/contracts/deployedContracts";
-import { 
-  CheckCircleIcon, 
-  CurrencyDollarIcon,
-  PaperClipIcon,
-  Square2StackIcon,
-  ArrowTopRightOnSquareIcon,
-  ClockIcon,
-  DocumentCheckIcon,
-  ArrowLeftIcon,
-  TruckIcon,
-  CheckIcon,
+import { toast } from "react-hot-toast";
+import { formatEther, parseEther } from "viem";
+import { useAccount, usePublicClient, useWriteContract } from "wagmi";
+import {
   ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  DocumentCheckIcon,
+  DocumentMagnifyingGlassIcon,
   ExclamationTriangleIcon,
-  ShieldCheckIcon,
   IdentificationIcon,
   ListBulletIcon,
-  DocumentMagnifyingGlassIcon,
-  HomeIcon,
-  ChevronRightIcon,
-  XMarkIcon
+  PaperClipIcon,
+  ShieldCheckIcon,
+  TruckIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { toast } from "react-hot-toast";
 import LogisticsTimeline, { EscrowStatus } from "~~/components/LogisticsTimeline";
-import { Address } from "@scaffold-ui/components";
+import deployedContracts from "~~/contracts/deployedContracts";
+import { useTransactor } from "~~/hooks/scaffold-eth";
 
 interface Order {
   address: string;
@@ -54,6 +48,7 @@ interface Order {
   shippingCid: string;
   productionLogs: string[];
   createdAt: bigint;
+  deposited?: boolean;
 }
 
 const OrderManagement: NextPage = () => {
@@ -62,15 +57,8 @@ const OrderManagement: NextPage = () => {
   const router = useRouter();
   const { address: connectedAddress } = useAccount();
   const publicClient = usePublicClient();
+  const { writeContractAsync } = useWriteContract();
   const writeTx = useTransactor();
-  
-  const { writeContractAsync: writeEscrowAsync } = useScaffoldWriteContract("SupplyChainEscrow");
-
-  // Fetch passport contract address from factory
-  const { data: passportContractAddress } = useScaffoldReadContract({
-    contractName: "EscrowFactory",
-    functionName: "passportContract",
-  });
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -84,39 +72,158 @@ const OrderManagement: NextPage = () => {
   const [isUploadingProduction, setIsUploadingProduction] = useState<boolean>(false);
   const [productionFileName, setProductionFileName] = useState<string>("");
 
-  const [isProductionFinished, setIsProductionFinished] = useState<boolean>(false);
   const [localProductionLogs, setLocalProductionLogs] = useState<string[]>([]);
-
-  const [disputeReasonInput, setDisputeReasonInput] = useState<string>("");
-  const [isRaisingDispute, setIsRaisingDispute] = useState<boolean>(false);
 
   const fetchOrderDetails = useCallback(async () => {
     if (!publicClient || !contractAddress) return;
-    
-    const escrowAbi = deployedContracts[31337].SupplyChainEscrow.abi;
-    
+
+    const chainId = publicClient.chain.id;
+    const escrowAbi = (deployedContracts as any)[chainId].SupplyChainEscrow.abi;
+
     setLoading(true);
     try {
-      const [buyer, seller, arbitrator, itemName, totalAmount, status, poCid, sellerAccepted, shipped, shippingProvider, trackingNumber, delivered, deliveredAt, completed, disputed, shippingCidFromContract, productionLogsFromContract, createdAtFromContract, disputeReasonFromContract] = await Promise.all([
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "buyer" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "seller" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "arbitrator" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "itemName" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "totalAmount" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "status" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "poCid" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "sellerAccepted" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "shipped" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "shippingProvider" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "trackingNumber" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "delivered" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "deliveredAt" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "completed" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "disputed" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "shippingCid" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "getProductionLogs" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "createdAt" }),
-        publicClient.readContract({ address: contractAddress as `0x${string}`, abi: escrowAbi, functionName: "disputeReason" }),
+      const [
+        buyer,
+        seller,
+        arbitrator,
+        itemName,
+        totalAmount,
+        status,
+        poCid,
+        sellerAccepted,
+        shipped,
+        shippingProvider,
+        trackingNumber,
+        delivered,
+        deliveredAt,
+        completed,
+        disputed,
+        shippingCidFromContract,
+        productionLogsFromContract,
+        createdAtFromContract,
+        disputeReasonFromContract,
+        depositedFromContract,
+      ] = await Promise.all([
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "buyer",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "seller",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "arbitrator",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "itemName",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "totalAmount",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "status",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "poCid",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "sellerAccepted",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "shipped",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "shippingProvider",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "trackingNumber",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "delivered",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "deliveredAt",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "completed",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "disputed",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "shippingCid",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "getProductionLogs",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "createdAt",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "disputeReason",
+          args: [],
+        }),
+        publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "deposited",
+          args: [],
+        }),
       ]);
 
       setOrder({
@@ -140,6 +247,7 @@ const OrderManagement: NextPage = () => {
         productionLogs: productionLogsFromContract as string[],
         createdAt: createdAtFromContract as bigint,
         disputeReason: disputeReasonFromContract as string,
+        deposited: depositedFromContract as boolean,
       });
     } catch (error) {
       console.error("Error fetching order details:", error);
@@ -156,7 +264,7 @@ const OrderManagement: NextPage = () => {
   const handleShippingFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    
+
     const file = files[0];
     setShippingFileName(file.name);
     setIsUploadingShipping(true);
@@ -197,7 +305,7 @@ const OrderManagement: NextPage = () => {
   const handleProductionFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    
+
     const file = files[0];
     setProductionFileName(file.name);
     setIsUploadingProduction(true);
@@ -238,63 +346,23 @@ const OrderManagement: NextPage = () => {
   const handleAction = async (functionName: string, args: any[] = [], value?: bigint) => {
     setIsActionLoading(true);
     try {
-      await writeEscrowAsync({
-        address: contractAddress as `0x${string}`,
-        functionName: functionName as any,
-        args: args as any,
-        value: value,
-      });
+      if (!publicClient) throw new Error("Public client not found");
+      const chainId = publicClient.chain.id;
+      const escrowAbi = (deployedContracts as any)[chainId].SupplyChainEscrow.abi;
+
+      await writeTx(() =>
+        writeContractAsync({
+          address: contractAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: functionName as any,
+          args: args as any,
+          value: value,
+        }),
+      );
       toast.success(`Action ${functionName} successful!`);
       fetchOrderDetails();
     } catch (e) {
       console.error(`Error in ${functionName}:`, e);
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  const handleRaiseDispute = async () => {
-    if (!disputeReasonInput) {
-      return toast.error("Please provide a reason for the dispute.");
-    }
-
-    setIsActionLoading(true);
-    const notificationId = toast.loading("Uploading dispute statement...");
-
-    try {
-      // 1. Upload statement to IPFS
-      const res = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          pinata_api_key: process.env.NEXT_PUBLIC_PINATA_API_KEY || "",
-          pinata_secret_api_key: process.env.NEXT_PUBLIC_PINATA_API_SECRET || "",
-        },
-        body: JSON.stringify({
-          reason: disputeReasonInput,
-          order: contractAddress,
-          timestamp: Date.now(),
-          raisedBy: connectedAddress
-        }),
-      });
-
-      const resData = await res.json();
-      if (!resData.IpfsHash) throw new Error("IPFS upload failed");
-
-      // 2. Call smart contract
-      await writeEscrowAsync({
-        address: contractAddress as `0x${string}`,
-        functionName: "raiseDispute",
-        args: [resData.IpfsHash],
-      });
-
-      toast.success("Dispute raised and evidence secured!", { id: notificationId });
-      setIsRaisingDispute(false);
-      setDisputeReasonInput("");
-      fetchOrderDetails();
-    } catch (e: any) {
-      console.error("Error raising dispute:", e);
-      toast.error(`Error: ${e.message}`, { id: notificationId });
     } finally {
       setIsActionLoading(false);
     }
@@ -311,21 +379,32 @@ const OrderManagement: NextPage = () => {
 
   const isBuyer = connectedAddress?.toLowerCase() === order.buyer.toLowerCase();
   const isSeller = connectedAddress?.toLowerCase() === order.seller.toLowerCase();
-  
-  const isExpired = order.status === 0 && (Date.now() / 1000) > (Number(order.createdAt) + 86400);
+
+  const isExpired = order.status === 0 && Date.now() / 1000 > Number(order.createdAt) + 86400;
   const expiryTime = new Date((Number(order.createdAt) + 86400) * 1000);
 
   // CREATED=0, ACCEPTED=1, IN_PRODUCTION=2, PRODUCTION_COMPLETED=3, SHIPPED=4, DELIVERED=5, COMPLETED=6, DISPUTED=7, REFUNDED=8
-  const timelineStatus = isExpired ? EscrowStatus.CANCELLED :
-                         order.status === 0 ? EscrowStatus.CREATED : 
-                         order.status === 1 ? EscrowStatus.ACCEPTED : 
-                         order.status === 2 ? EscrowStatus.PRODUCTION :
-                         order.status === 3 ? EscrowStatus.PRODUCTION_COMPLETED :
-                         order.status === 4 ? EscrowStatus.SHIPPED :
-                         order.status === 5 ? EscrowStatus.DELIVERED :
-                         order.status === 6 ? EscrowStatus.COMPLETED :
-                         order.status === 7 ? EscrowStatus.DISPUTED :
-                         order.status === 8 ? EscrowStatus.CANCELLED : EscrowStatus.CREATED;
+  const timelineStatus = isExpired
+    ? EscrowStatus.CANCELLED
+    : order.status === 0
+      ? EscrowStatus.CREATED
+      : order.status === 1
+        ? EscrowStatus.ACCEPTED
+        : order.status === 2
+          ? EscrowStatus.PRODUCTION
+          : order.status === 3
+            ? EscrowStatus.PRODUCTION_COMPLETED
+            : order.status === 4
+              ? EscrowStatus.SHIPPED
+              : order.status === 5
+                ? EscrowStatus.DELIVERED
+                : order.status === 6
+                  ? EscrowStatus.COMPLETED
+                  : order.status === 7
+                    ? EscrowStatus.DISPUTED
+                    : order.status === 8
+                      ? EscrowStatus.CANCELLED
+                      : EscrowStatus.CREATED;
 
   const milestone1 = (parseFloat(order.amount) * 0.3).toFixed(4);
   const milestone2 = (parseFloat(order.amount) * 0.5).toFixed(4);
@@ -342,29 +421,6 @@ const OrderManagement: NextPage = () => {
   return (
     <div className="flex flex-col grow bg-base-200 pb-20">
       <div className="max-w-7xl w-full mx-auto px-4 mt-8">
-        <div className="text-sm breadcrumbs mb-6 text-base-content/60">
-          <ul>
-            <li>
-              <Link href="/dashboard" className="flex items-center gap-2 hover:text-primary">
-                <HomeIcon className="h-4 w-4" />
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link href="/orders" className="flex items-center gap-2 hover:text-primary">
-                <Square2StackIcon className="h-4 w-4" />
-                My Orders
-              </Link>
-            </li>
-            <li className="font-bold text-base-content">
-              <span className="flex items-center gap-2">
-                <DocumentCheckIcon className="h-4 w-4" />
-                Order Details
-              </span>
-            </li>
-          </ul>
-        </div>
-
         <div className="mb-10">
           <LogisticsTimeline currentStatus={timelineStatus} isPaused={order.disputed} />
         </div>
@@ -376,15 +432,31 @@ const OrderManagement: NextPage = () => {
                 <div>
                   <div className="flex items-center gap-2 text-primary mb-2">
                     <CheckCircleIcon className="h-6 w-6" />
-                    <span className="font-bold uppercase tracking-wider text-sm">Escrow #{contractAddress.slice(-4)}</span>
+                    <span className="font-bold uppercase tracking-wider text-sm">
+                      Escrow #{contractAddress.slice(-4)}
+                    </span>
                   </div>
                   <h2 className="text-4xl font-black text-base-content mb-2">{order.item}</h2>
                   <Address address={order.address} />
                 </div>
                 <div className="text-right">
                   <div className="text-xs uppercase opacity-50 font-bold mb-1">Status</div>
-                  <div className={`badge ${order.status === 7 || isExpired ? "badge-error" : "badge-primary"} p-4 rounded-sm font-bold text-lg uppercase tracking-tighter`}>
-                    {isExpired ? "Expired" : ["Created", "Accepted", "In Production", "Production Ready", "Shipped", "Delivered", "Completed", "Disputed", "Cancelled"][order.status]}
+                  <div
+                    className={`badge ${order.status === 7 || isExpired ? "badge-error" : "badge-primary"} p-4 rounded-sm font-bold text-lg uppercase tracking-tighter`}
+                  >
+                    {isExpired
+                      ? "Expired"
+                      : [
+                          "Created",
+                          "Accepted",
+                          "In Production",
+                          "Production Ready",
+                          "Shipped",
+                          "Delivered",
+                          "Completed",
+                          "Disputed",
+                          "Cancelled",
+                        ][order.status]}
                   </div>
                 </div>
               </div>
@@ -394,32 +466,35 @@ const OrderManagement: NextPage = () => {
               <div className="col-span-2 space-y-8">
                 {/* ACTION CARDS */}
                 {order.status === 0 && (
-                  <div className={`${isExpired ? "bg-error/10 border-error/20" : "bg-warning/10 border-warning/20"} p-6 rounded-sm border`}>
+                  <div
+                    className={`${isExpired ? "bg-error/10 border-error/20" : "bg-warning/10 border-warning/20"} p-6 rounded-sm border`}
+                  >
                     <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
                       {isExpired ? <XMarkIcon className="h-5 w-5 text-error" /> : <ClockIcon className="h-5 w-5" />}
                       {isExpired ? "Offer Expired" : "Waiting for Seller"}
                     </h3>
                     <p className="text-sm mb-4">
-                      {isExpired 
-                        ? "This contract offer was not accepted within the 24-hour window and is now void." 
+                      {isExpired
+                        ? "This contract offer was not accepted within the 24-hour window and is now void."
                         : `The seller has until ${expiryTime.toLocaleString()} to review and accept these terms.`}
                     </p>
                     <div className="flex flex-col gap-3">
                       {isSeller && !isExpired && (
                         <>
-                          <button 
+                          <button
                             className={`btn btn-warning rounded-sm shadow-md px-10 ${isActionLoading ? "loading" : ""}`}
                             onClick={() => handleAction("acceptContract")}
                           >
                             Accept Terms & Contract
                           </button>
                           <p className="text-[10px] opacity-50 italic mt-1">
-                            Note: This offer is time-sensitive and will automatically expire on {expiryTime.toLocaleString()} if not accepted.
+                            Note: This offer is time-sensitive and will automatically expire on{" "}
+                            {expiryTime.toLocaleString()} if not accepted.
                           </p>
                         </>
                       )}
                       {isBuyer && (
-                        <button 
+                        <button
                           className={`btn btn-error btn-outline rounded-sm ${isActionLoading ? "loading" : ""}`}
                           onClick={() => handleAction("cancelContract")}
                         >
@@ -434,17 +509,22 @@ const OrderManagement: NextPage = () => {
                   <>
                     {isBuyer ? (
                       <div className="bg-primary/10 p-6 rounded-sm border border-primary/20">
-                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><CurrencyDollarIcon className="h-5 w-5" /> Secure Escrow Funding</h3>
-                        <p className="text-sm mb-4">Terms accepted. Please fund the contract to initiate production and secure the trade.</p>
-                        
+                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                          <CurrencyDollarIcon className="h-5 w-5" /> Secure Escrow Funding
+                        </h3>
+                        <p className="text-sm mb-4">
+                          Terms accepted. Please fund the contract to initiate production and secure the trade.
+                        </p>
+
                         <div className="bg-primary/20 p-4 rounded-sm border border-primary/30 mb-6">
-                           <p className="text-sm font-bold text-primary mb-0 flex items-center gap-2">
-                             <ShieldCheckIcon className="h-5 w-5" />
-                             Depositing Total {order.amount} ETH and Auto Release {milestone1} ETH (30%) for seller to start production.
-                           </p>
+                          <p className="text-sm font-bold text-primary mb-0 flex items-center gap-2">
+                            <ShieldCheckIcon className="h-5 w-5" />
+                            Depositing Total {order.amount} MON and Auto Release {milestone1} MON (30%) for seller to
+                            start production.
+                          </p>
                         </div>
 
-                        <button 
+                        <button
                           className={`btn btn-primary rounded-sm shadow-lg px-8 ${isActionLoading ? "loading" : ""}`}
                           onClick={() => handleAction("depositAndStartProduction", [], parseEther(order.amount))}
                         >
@@ -453,9 +533,15 @@ const OrderManagement: NextPage = () => {
                       </div>
                     ) : isSeller ? (
                       <div className="bg-base-200 p-6 rounded-sm border border-base-300">
-                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-base-content/70"><ClockIcon className="h-5 w-5" /> Awaiting Initial Deposit</h3>
-                        <p className="text-sm mb-1">Contract terms accepted. Waiting for the buyer to fund the escrow.</p>
-                        <p className="text-xs opacity-50 italic">Production should commence immediately after the initial 30% ({milestone1} ETH) is released.</p>
+                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-base-content/70">
+                          <ClockIcon className="h-5 w-5" /> Awaiting Initial Deposit
+                        </h3>
+                        <p className="text-sm mb-1">
+                          Contract terms accepted. Waiting for the buyer to fund the escrow.
+                        </p>
+                        <p className="text-xs opacity-50 italic">
+                          Production should commence immediately after the initial 30% ({milestone1} MON) is released.
+                        </p>
                       </div>
                     ) : null}
                   </>
@@ -467,24 +553,46 @@ const OrderManagement: NextPage = () => {
                       <div className="bg-success/10 p-6 rounded-sm border border-success/20">
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <h3 className="font-bold text-lg flex items-center gap-2"><ArrowPathIcon className="h-5 w-5" /> Post Production Update</h3>
-                            <p className="text-sm opacity-70">Keep the buyer informed. These updates will be permanently recorded on-chain when you ship.</p>
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                              <ArrowPathIcon className="h-5 w-5" /> Post Production Update
+                            </h3>
+                            <p className="text-sm opacity-70">
+                              Keep the buyer informed. These updates will be permanently recorded on-chain when you
+                              ship.
+                            </p>
                           </div>
-                          <button 
+                          <button
                             className={`btn btn-sm btn-outline btn-success rounded-sm ${isActionLoading ? "loading" : ""}`}
                             onClick={() => handleAction("finishProduction")}
                           >
                             Mark Production as Finished
                           </button>
                         </div>
-                        
+
                         <div className="flex flex-col md:flex-row gap-3">
-                          <label className={`flex-1 flex items-center justify-center gap-2 border-2 border-dashed rounded-sm p-2 transition-colors cursor-pointer bg-base-100 ${productionCid ? "border-success" : "border-base-300"}`}>
-                            {isUploadingProduction ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperClipIcon className="h-4 w-4 opacity-50" />}
-                            <span className="text-xs font-medium truncate max-w-[200px]">{isUploadingProduction ? "Uploading..." : productionCid ? "Update Ready" : productionFileName || "Evidence Photo/Report"}</span>
-                            <input type="file" className="hidden" onChange={handleProductionFileUpload} disabled={isUploadingProduction} />
+                          <label
+                            className={`flex-1 flex items-center justify-center gap-2 border-2 border-dashed rounded-sm p-2 transition-colors cursor-pointer bg-base-100 ${productionCid ? "border-success" : "border-base-300"}`}
+                          >
+                            {isUploadingProduction ? (
+                              <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <PaperClipIcon className="h-4 w-4 opacity-50" />
+                            )}
+                            <span className="text-xs font-medium truncate max-w-[200px]">
+                              {isUploadingProduction
+                                ? "Uploading..."
+                                : productionCid
+                                  ? "Update Ready"
+                                  : productionFileName || "Evidence Photo/Report"}
+                            </span>
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={handleProductionFileUpload}
+                              disabled={isUploadingProduction}
+                            />
                           </label>
-                          <button 
+                          <button
                             className={`btn btn-success rounded-sm ${isActionLoading || !productionCid ? "btn-disabled" : ""}`}
                             onClick={() => {
                               // Save locally without gas
@@ -502,8 +610,13 @@ const OrderManagement: NextPage = () => {
 
                     {isBuyer && (
                       <div className="bg-primary/10 p-6 rounded-sm border border-primary/20">
-                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><ClockIcon className="h-5 w-5" /> Production in Progress</h3>
-                        <p className="text-sm">The seller is currently manufacturing your item. Once the item ships, the full production audit trail will be available here.</p>
+                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                          <ClockIcon className="h-5 w-5" /> Production in Progress
+                        </h3>
+                        <p className="text-sm">
+                          The seller is currently manufacturing your item. Once the item ships, the full production
+                          audit trail will be available here.
+                        </p>
                       </div>
                     )}
 
@@ -511,36 +624,58 @@ const OrderManagement: NextPage = () => {
                     <div className="card bg-base-100 border border-base-300 rounded-sm">
                       <div className="card-body p-6">
                         <h4 className="text-xs font-black uppercase opacity-50 mb-4 flex items-center gap-2">
-                          <ListBulletIcon className="h-4 w-4" /> Production Audit Log ({order.productionLogs.length + (isSeller ? localProductionLogs.length : 0)})
+                          <ListBulletIcon className="h-4 w-4" /> Production Audit Log (
+                          {order.productionLogs.length + (isSeller ? localProductionLogs.length : 0)})
                         </h4>
-                        {(order.productionLogs.length === 0 && localProductionLogs.length === 0) ? (
+                        {order.productionLogs.length === 0 && localProductionLogs.length === 0 ? (
                           <p className="text-center py-8 opacity-30 italic text-sm">No production updates yet.</p>
                         ) : (
                           <div className="space-y-4">
                             {/* On-Chain Logs */}
                             {order.productionLogs.map((log, index) => (
-                              <div key={`onchain-${index}`} className="flex items-center justify-between p-3 bg-base-200 rounded-sm group hover:bg-base-300 transition-colors border-l-4 border-success">
+                              <div
+                                key={`onchain-${index}`}
+                                className="flex items-center justify-between p-3 bg-base-200 rounded-sm group hover:bg-base-300 transition-colors border-l-4 border-success"
+                              >
                                 <div className="flex items-center gap-3">
-                                  <div className="bg-success/10 text-success p-2 rounded-full font-bold text-[10px]">On-Chain</div>
+                                  <div className="bg-success/10 text-success p-2 rounded-full font-bold text-[10px]">
+                                    On-Chain
+                                  </div>
                                   <span className="text-xs font-bold">Verified Production Evidence</span>
                                 </div>
-                                <a href={`https://gateway.pinata.cloud/ipfs/${log}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-xs gap-1 group-hover:text-primary">
+                                <a
+                                  href={`https://gateway.pinata.cloud/ipfs/${log}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="btn btn-ghost btn-xs gap-1 group-hover:text-primary"
+                                >
                                   <DocumentMagnifyingGlassIcon className="h-4 w-4" /> View
                                 </a>
                               </div>
                             ))}
                             {/* Seller's Local Pending Logs */}
-                            {isSeller && localProductionLogs.map((log, index) => (
-                              <div key={`local-${index}`} className="flex items-center justify-between p-3 bg-base-200 rounded-sm group border-l-4 border-warning italic opacity-80">
-                                <div className="flex items-center gap-3">
-                                  <div className="bg-warning/10 text-warning p-2 rounded-full font-bold text-[10px]">Pending</div>
-                                  <span className="text-xs font-bold">WIP Update (Will sync on ship)</span>
+                            {isSeller &&
+                              localProductionLogs.map((log, index) => (
+                                <div
+                                  key={`local-${index}`}
+                                  className="flex items-center justify-between p-3 bg-base-200 rounded-sm group border-l-4 border-warning italic opacity-80"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="bg-warning/10 text-warning p-2 rounded-full font-bold text-[10px]">
+                                      Pending
+                                    </div>
+                                    <span className="text-xs font-bold">WIP Update (Will sync on ship)</span>
+                                  </div>
+                                  <a
+                                    href={`https://gateway.pinata.cloud/ipfs/${log}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="btn btn-ghost btn-xs gap-1"
+                                  >
+                                    <DocumentMagnifyingGlassIcon className="h-4 w-4" /> Preview
+                                  </a>
                                 </div>
-                                <a href={`https://gateway.pinata.cloud/ipfs/${log}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-xs gap-1">
-                                  <DocumentMagnifyingGlassIcon className="h-4 w-4" /> Preview
-                                </a>
-                              </div>
-                            ))}
+                              ))}
                           </div>
                         )}
                       </div>
@@ -552,8 +687,13 @@ const OrderManagement: NextPage = () => {
                   <div className="space-y-6">
                     {isBuyer && (
                       <div className="bg-success/10 p-6 rounded-sm border border-success/20">
-                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><CheckCircleIcon className="h-5 w-5" /> Production Completed</h3>
-                        <p className="text-sm">Manufacturing is finished. The seller is currently preparing your order for shipment. You will be notified as soon as a tracking number is provided.</p>
+                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                          <CheckCircleIcon className="h-5 w-5" /> Production Completed
+                        </h3>
+                        <p className="text-sm">
+                          Manufacturing is finished. The seller is currently preparing your order for shipment. You will
+                          be notified as soon as a tracking number is provided.
+                        </p>
                       </div>
                     )}
 
@@ -561,8 +701,13 @@ const OrderManagement: NextPage = () => {
                       <div className="bg-success/10 p-6 rounded-sm border border-success/20 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <h3 className="font-bold text-lg flex items-center gap-2"><TruckIcon className="h-5 w-5" /> Ready for Shipment</h3>
-                            <p className="text-sm opacity-70">Production complete. Provide tracking details. All {localProductionLogs.length} pending updates will be committed to the blockchain now.</p>
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                              <TruckIcon className="h-5 w-5" /> Ready for Shipment
+                            </h3>
+                            <p className="text-sm opacity-70">
+                              Production complete. Provide tracking details. All {localProductionLogs.length} pending
+                              updates will be committed to the blockchain now.
+                            </p>
                           </div>
                         </div>
 
@@ -579,20 +724,43 @@ const OrderManagement: NextPage = () => {
                           </div>
                           <div className="form-control">
                             <label className="label text-[10px] font-bold uppercase opacity-60">Tracking Number</label>
-                            <input id="tracking" placeholder="TRK123456789" className="input input-bordered input-sm rounded-sm" />
+                            <input
+                              id="tracking"
+                              placeholder="TRK123456789"
+                              className="input input-bordered input-sm rounded-sm"
+                            />
                           </div>
                         </div>
 
                         <div className="form-control mb-6">
-                          <label className="label text-[10px] font-bold uppercase opacity-60">Final Shipping Proof (Bill of Lading)</label>
-                          <label className={`flex items-center justify-center gap-2 border-2 border-dashed rounded-sm p-3 transition-colors cursor-pointer bg-base-100 ${shippingCid ? "border-success" : "border-base-300"}`}>
-                            {isUploadingShipping ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperClipIcon className="h-4 w-4 opacity-50" />}
-                            <span className="text-sm font-medium">{isUploadingShipping ? "Uploading..." : shippingCid ? "Proof pinned to IPFS" : shippingFileName || "Attach Evidence"}</span>
-                            <input type="file" className="hidden" onChange={handleShippingFileUpload} disabled={isUploadingShipping} />
+                          <label className="label text-[10px] font-bold uppercase opacity-60">
+                            Final Shipping Proof (Bill of Lading)
+                          </label>
+                          <label
+                            className={`flex items-center justify-center gap-2 border-2 border-dashed rounded-sm p-3 transition-colors cursor-pointer bg-base-100 ${shippingCid ? "border-success" : "border-base-300"}`}
+                          >
+                            {isUploadingShipping ? (
+                              <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <PaperClipIcon className="h-4 w-4 opacity-50" />
+                            )}
+                            <span className="text-sm font-medium">
+                              {isUploadingShipping
+                                ? "Uploading..."
+                                : shippingCid
+                                  ? "Proof pinned to IPFS"
+                                  : shippingFileName || "Attach Evidence"}
+                            </span>
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={handleShippingFileUpload}
+                              disabled={isUploadingShipping}
+                            />
                           </label>
                         </div>
 
-                        <button 
+                        <button
                           className={`btn btn-success btn-block rounded-sm shadow-md ${isActionLoading ? "loading" : ""}`}
                           onClick={() => {
                             const p = (document.getElementById("provider") as HTMLSelectElement).value;
@@ -613,18 +781,24 @@ const OrderManagement: NextPage = () => {
                   <>
                     {isBuyer && (
                       <div className="bg-success/10 p-6 rounded-sm border border-success/20">
-                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><TruckIcon className="h-5 w-5" /> Verify Delivery</h3>
-                        <p className="text-sm mb-4">The item has been shipped. Please check the delivery status before confirming.</p>
-                        
+                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                          <TruckIcon className="h-5 w-5" /> Verify Delivery
+                        </h3>
+                        <p className="text-sm mb-4">
+                          The item has been shipped. Please check the delivery status before confirming.
+                        </p>
+
                         <div className="bg-base-100 p-4 rounded-sm border border-success/20 shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
                           <div>
                             <p className="text-[10px] uppercase font-bold opacity-50 mb-1">Carrier & Tracking</p>
-                            <p className="text-sm font-bold">{order.shippingProvider} — <span className="font-mono">{order.trackingNumber}</span></p>
+                            <p className="text-sm font-bold">
+                              {order.shippingProvider} — <span className="font-mono">{order.trackingNumber}</span>
+                            </p>
                           </div>
                           {getTrackingUrl(order.shippingProvider, order.trackingNumber) && (
-                            <a 
-                              href={getTrackingUrl(order.shippingProvider, order.trackingNumber) || "#"} 
-                              target="_blank" 
+                            <a
+                              href={getTrackingUrl(order.shippingProvider, order.trackingNumber) || "#"}
+                              target="_blank"
                               rel="noreferrer"
                               className="btn btn-outline btn-sm btn-primary gap-2"
                             >
@@ -634,12 +808,14 @@ const OrderManagement: NextPage = () => {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                          <p className="text-xs font-bold opacity-70">Once you verify the item has arrived and is in good condition:</p>
-                          <button 
+                          <p className="text-xs font-bold opacity-70">
+                            Once you verify the item has arrived and is in good condition:
+                          </p>
+                          <button
                             className={`btn btn-success rounded-sm shadow-lg ${isActionLoading ? "loading" : ""}`}
                             onClick={() => handleAction("confirmDelivery")}
                           >
-                            Confirm Delivery & Release {milestone2} ETH
+                            Confirm Delivery & Release {milestone2} MON
                           </button>
                         </div>
                       </div>
@@ -656,7 +832,8 @@ const OrderManagement: NextPage = () => {
                           </div>
                           <h3 className="text-2xl font-black mb-2">Shipment in Transit</h3>
                           <p className="text-sm opacity-70 max-w-md mx-auto mb-8">
-                            You have successfully marked the item as shipped. We are now waiting for the buyer to confirm the delivery at their warehouse.
+                            You have successfully marked the item as shipped. We are now waiting for the buyer to
+                            confirm the delivery at their warehouse.
                           </p>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mb-8">
@@ -667,16 +844,16 @@ const OrderManagement: NextPage = () => {
                             </div>
                             <div className="bg-success/10 p-4 rounded-sm border border-success/20 text-left">
                               <p className="text-[10px] uppercase font-bold text-success mb-1">Next Expected Payment</p>
-                              <p className="font-black text-lg text-success">{milestone2} ETH</p>
+                              <p className="font-black text-lg text-success">{milestone2} MON</p>
                               <p className="text-[9px] opacity-60">Released immediately upon delivery confirmation</p>
                             </div>
                           </div>
 
                           <div className="flex gap-4">
                             {getTrackingUrl(order.shippingProvider, order.trackingNumber) && (
-                              <a 
-                                href={getTrackingUrl(order.shippingProvider, order.trackingNumber) || "#"} 
-                                target="_blank" 
+                              <a
+                                href={getTrackingUrl(order.shippingProvider, order.trackingNumber) || "#"}
+                                target="_blank"
                                 rel="noreferrer"
                                 className="btn btn-outline btn-sm rounded-sm gap-2"
                               >
@@ -692,37 +869,50 @@ const OrderManagement: NextPage = () => {
 
                 {order.status === 5 && (
                   <div className="bg-success/10 p-6 rounded-sm border border-success/20">
-                    <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><CheckCircleIcon className="h-5 w-5" /> Final Inspection Phase</h3>
+                    <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                      <CheckCircleIcon className="h-5 w-5" /> Final Inspection Phase
+                    </h3>
                     <p className="text-sm mb-4">Item delivered. The 14-day inspection period is active.</p>
-                    
+
                     <div className="bg-base-100 p-4 rounded-sm border border-warning/20 shadow-sm mb-6">
-                      <p className="text-[10px] uppercase font-bold opacity-50 mb-1 flex items-center gap-1"><ClockIcon className="h-3 w-3" /> Fairness Timer</p>
+                      <p className="text-[10px] uppercase font-bold opacity-50 mb-1 flex items-center gap-1">
+                        <ClockIcon className="h-3 w-3" /> Fairness Timer
+                      </p>
                       <p className="text-sm font-bold text-warning">Automatic Release in 14 Days</p>
                       <p className="text-[10px] opacity-60">
-                        If no dispute is raised, the seller can claim the remaining <strong>{milestone3} ETH</strong> on: <br/>
-                        <span className="font-bold text-base-content">{new Date(Number(order.deliveredAt) * 1000 + 14 * 86400 * 1000).toLocaleString()}</span>
+                        If no dispute is raised, the seller can claim the remaining <strong>{milestone3} MON</strong>{" "}
+                        on: <br />
+                        <span className="font-bold text-base-content">
+                          {new Date(Number(order.deliveredAt) * 1000 + 14 * 86400 * 1000).toLocaleString()}
+                        </span>
                       </p>
                     </div>
 
                     {isBuyer ? (
                       <div className="flex flex-col gap-2">
-                        <p className="text-xs font-bold opacity-70">Satisfied with the item? Complete the contract to release the final 20%:</p>
-                        <button 
+                        <p className="text-xs font-bold opacity-70">
+                          Satisfied with the item? Complete the contract to release the final 20%:
+                        </p>
+                        <button
                           className={`btn btn-success rounded-sm shadow-lg ${isActionLoading ? "loading" : ""}`}
                           onClick={() => handleAction("buyerCompletecontract")}
                         >
-                          Complete & Release {milestone3} ETH
+                          Complete & Release {milestone3} MON
                         </button>
                       </div>
                     ) : isSeller ? (
                       <div className="flex flex-col gap-2">
-                        <p className="text-xs font-bold opacity-70">You can claim the final payment once the inspection period expires:</p>
-                        <button 
+                        <p className="text-xs font-bold opacity-70">
+                          You can claim the final payment once the inspection period expires:
+                        </p>
+                        <button
                           className={`btn btn-primary rounded-sm shadow-lg ${isActionLoading ? "loading" : ""}`}
                           onClick={() => handleAction("sellerClaimFinalPayment")}
-                          disabled={Date.now() < (Number(order.deliveredAt) * 1000 + 14 * 86400 * 1000)}
+                          disabled={Date.now() < Number(order.deliveredAt) * 1000 + 14 * 86400 * 1000}
                         >
-                          {Date.now() < (Number(order.deliveredAt) * 1000 + 14 * 86400 * 1000) ? "Inspection Period Active" : `Claim Final ${milestone3} ETH`}
+                          {Date.now() < Number(order.deliveredAt) * 1000 + 14 * 86400 * 1000
+                            ? "Inspection Period Active"
+                            : `Claim Final ${milestone3} MON`}
                         </button>
                       </div>
                     ) : null}
@@ -742,9 +932,10 @@ const OrderManagement: NextPage = () => {
                       </div>
                       <h3 className="text-3xl font-black mb-2">100% Payment Released</h3>
                       <p className="text-sm opacity-70 mb-6 mx-auto max-w-md">
-                        This escrow has been successfully finalized. All funds have been transferred to the seller, and the machine's provenance has been secured.
+                        This escrow has been successfully finalized. All funds have been transferred to the seller, and
+                        the machine&apos;s provenance has been secured.
                       </p>
-                      
+
                       {/* Payment Summary */}
                       <div className="grid grid-cols-3 gap-2 w-full max-w-lg mb-8">
                         <div className="bg-base-100 p-3 rounded-sm border border-success/20">
@@ -762,16 +953,16 @@ const OrderManagement: NextPage = () => {
                       </div>
 
                       <div className="flex flex-col sm:flex-row gap-4">
-                        <button 
+                        <button
                           onClick={() => router.push("/orders")}
                           className="btn btn-secondary btn-wide rounded-sm shadow-md gap-2"
                         >
                           <IdentificationIcon className="h-5 w-5" />
                           View Machine Passport
                         </button>
-                        <a 
-                          href={`https://gateway.pinata.cloud/ipfs/${order.poCid}`} 
-                          target="_blank" 
+                        <a
+                          href={`https://gateway.pinata.cloud/ipfs/${order.poCid}`}
+                          target="_blank"
                           rel="noreferrer"
                           className="btn btn-outline btn-wide rounded-sm gap-2"
                         >
@@ -788,17 +979,18 @@ const OrderManagement: NextPage = () => {
                     <ExclamationTriangleIcon className="h-12 w-12 text-error mx-auto mb-4" />
                     <h3 className="text-2xl font-black text-error mb-2">Order Under Dispute</h3>
                     <p className="text-sm opacity-70 mb-6 max-w-md mx-auto">
-                      All logistics and payments for this contract have been frozen. The Arbitrator is currently reviewing the evidence and statement provided.
+                      All logistics and payments for this contract have been frozen. The Arbitrator is currently
+                      reviewing the evidence and statement provided.
                     </p>
                     {order.disputeReason && (
                       <div className="bg-base-100 p-4 rounded-sm border border-error/20 text-left mb-6 max-w-xl mx-auto shadow-sm">
                         <p className="text-[10px] uppercase font-black opacity-40 mb-2 flex items-center gap-2">
                           <DocumentCheckIcon className="h-3 w-3" /> Filed Statement
                         </p>
-                        <a 
-                          href={`https://gateway.pinata.cloud/ipfs/${order.disputeReason}`} 
-                          target="_blank" 
-                          rel="noreferrer" 
+                        <a
+                          href={`https://gateway.pinata.cloud/ipfs/${order.disputeReason}`}
+                          target="_blank"
+                          rel="noreferrer"
                           className="btn btn-error btn-outline btn-sm rounded-sm w-full gap-2"
                         >
                           <DocumentMagnifyingGlassIcon className="h-4 w-4" /> View Verified Claim (IPFS)
@@ -818,12 +1010,19 @@ const OrderManagement: NextPage = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="stat bg-base-100 border border-base-300 rounded-sm p-4">
                     <div className="stat-title text-[10px] uppercase font-bold opacity-50">Total Value</div>
-                    <div className="stat-value text-2xl font-black text-primary">{order.amount} ETH</div>
+                    <div className="stat-value text-2xl font-black text-primary">{order.amount} MON</div>
                   </div>
                   <div className="stat bg-base-100 border border-base-300 rounded-sm p-4">
                     <div className="stat-title text-[10px] uppercase font-bold opacity-50">Remaining</div>
                     <div className="stat-value text-2xl font-black text-success">
-                      {order.status >= 6 ? "0.00" : (order.status >= 5 ? milestone3 : (order.status >= 2 ? (parseFloat(order.amount)*0.7).toFixed(4) : order.amount))} ETH
+                      {order.status >= 6
+                        ? "0.00"
+                        : order.status >= 5
+                          ? milestone3
+                          : order.status >= 2
+                            ? (parseFloat(order.amount) * 0.7).toFixed(4)
+                            : order.amount}{" "}
+                      MON
                     </div>
                   </div>
                 </div>
@@ -854,13 +1053,19 @@ const OrderManagement: NextPage = () => {
                           <span className="text-[9px] opacity-40">Released on Deposit</span>
                         </div>
                         <div className="flex flex-col items-end">
-                          <span className="font-mono font-bold text-sm">{milestone1} ETH</span>
+                          <span className="font-mono font-bold text-sm">{milestone1} MON</span>
                           {order.status === 7 && !order.deposited ? (
-                            <span className="badge badge-error badge-xs rounded-sm text-[8px] font-black uppercase py-2">🚨 HELD IN ESCROW</span>
+                            <span className="badge badge-error badge-xs rounded-sm text-[8px] font-black uppercase py-2">
+                              🚨 HELD IN ESCROW
+                            </span>
                           ) : order.status >= 2 || order.deposited ? (
-                            <span className="badge badge-success badge-xs rounded-sm text-[8px] font-black uppercase py-2">Released</span>
+                            <span className="badge badge-success badge-xs rounded-sm text-[8px] font-black uppercase py-2">
+                              Released
+                            </span>
                           ) : (
-                            <span className="badge badge-ghost badge-xs rounded-sm text-[8px] font-black uppercase py-2 opacity-50">Locked</span>
+                            <span className="badge badge-ghost badge-xs rounded-sm text-[8px] font-black uppercase py-2 opacity-50">
+                              Locked
+                            </span>
                           )}
                         </div>
                       </div>
@@ -871,13 +1076,19 @@ const OrderManagement: NextPage = () => {
                           <span className="text-[9px] opacity-40">Released on Arrival</span>
                         </div>
                         <div className="flex flex-col items-end">
-                          <span className="font-mono font-bold text-sm">{milestone2} ETH</span>
+                          <span className="font-mono font-bold text-sm">{milestone2} MON</span>
                           {order.status === 7 && !order.delivered ? (
-                            <span className="badge badge-error badge-xs rounded-sm text-[8px] font-black uppercase py-2">🚨 HELD IN ESCROW</span>
+                            <span className="badge badge-error badge-xs rounded-sm text-[8px] font-black uppercase py-2">
+                              🚨 HELD IN ESCROW
+                            </span>
                           ) : order.status >= 5 || order.delivered ? (
-                            <span className="badge badge-success badge-xs rounded-sm text-[8px] font-black uppercase py-2">Released</span>
+                            <span className="badge badge-success badge-xs rounded-sm text-[8px] font-black uppercase py-2">
+                              Released
+                            </span>
                           ) : (
-                            <span className="badge badge-ghost badge-xs rounded-sm text-[8px] font-black uppercase py-2 opacity-50">Locked</span>
+                            <span className="badge badge-ghost badge-xs rounded-sm text-[8px] font-black uppercase py-2 opacity-50">
+                              Locked
+                            </span>
                           )}
                         </div>
                       </div>
@@ -888,13 +1099,19 @@ const OrderManagement: NextPage = () => {
                           <span className="text-[9px] opacity-40">Final Acceptance</span>
                         </div>
                         <div className="flex flex-col items-end">
-                          <span className="font-mono font-bold text-sm">{milestone3} ETH</span>
+                          <span className="font-mono font-bold text-sm">{milestone3} MON</span>
                           {order.status === 7 && !order.completed ? (
-                            <span className="badge badge-error badge-xs rounded-sm text-[8px] font-black uppercase py-2">🚨 HELD IN ESCROW</span>
+                            <span className="badge badge-error badge-xs rounded-sm text-[8px] font-black uppercase py-2">
+                              🚨 HELD IN ESCROW
+                            </span>
                           ) : order.status >= 6 || order.completed ? (
-                            <span className="badge badge-success badge-xs rounded-sm text-[8px] font-black uppercase py-2">Released</span>
+                            <span className="badge badge-success badge-xs rounded-sm text-[8px] font-black uppercase py-2">
+                              Released
+                            </span>
                           ) : (
-                            <span className="badge badge-ghost badge-xs rounded-sm text-[8px] font-black uppercase py-2 opacity-50">Locked</span>
+                            <span className="badge badge-ghost badge-xs rounded-sm text-[8px] font-black uppercase py-2 opacity-50">
+                              Locked
+                            </span>
                           )}
                         </div>
                       </div>
@@ -902,7 +1119,7 @@ const OrderManagement: NextPage = () => {
 
                     <div className="mt-4 pt-4 border-t border-primary-content/10 flex justify-between items-center">
                       <span className="text-xs font-black uppercase">Total Volume</span>
-                      <span className="text-lg font-black">{order.amount} ETH</span>
+                      <span className="text-lg font-black">{order.amount} MON</span>
                     </div>
                   </div>
                 </div>
@@ -917,7 +1134,12 @@ const OrderManagement: NextPage = () => {
                         <DocumentCheckIcon className="h-5 w-5 text-success" />
                         <span className="text-xs font-bold">Purchase Order</span>
                       </div>
-                      <a href={`https://gateway.pinata.cloud/ipfs/${order.poCid}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-xs btn-square">
+                      <a
+                        href={`https://gateway.pinata.cloud/ipfs/${order.poCid}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-ghost btn-xs btn-square"
+                      >
                         <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                       </a>
                     </div>
@@ -927,7 +1149,12 @@ const OrderManagement: NextPage = () => {
                           <TruckIcon className="h-5 w-5 text-success" />
                           <span className="text-xs font-bold">Shipping Proof</span>
                         </div>
-                        <a href={`https://gateway.pinata.cloud/ipfs/${order.shippingCid}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-xs btn-square">
+                        <a
+                          href={`https://gateway.pinata.cloud/ipfs/${order.shippingCid}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-ghost btn-xs btn-square"
+                        >
                           <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                         </a>
                       </div>

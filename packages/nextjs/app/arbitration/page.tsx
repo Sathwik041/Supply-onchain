@@ -1,21 +1,20 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useCallback } from "react";
-import type { NextPage } from "next";
-import { useAccount, usePublicClient } from "wagmi";
-import { 
-  ShieldCheckIcon,
-  ExclamationTriangleIcon,
-  ArrowPathIcon,
-  ScaleIcon,
-  DocumentMagnifyingGlassIcon,
-  ArrowTopRightOnSquareIcon
-} from "@heroicons/react/24/outline";
+import React, { useCallback, useEffect, useState } from "react";
 import { Address } from "@scaffold-ui/components";
-import { useScaffoldReadContract, useScaffoldWriteContract, useTransactor } from "~~/hooks/scaffold-eth";
-import { formatEther } from "viem";
-import SupplyChainEscrowArtifact from "~~/contracts/SupplyChainEscrow.json";
+import type { NextPage } from "next";
 import { toast } from "react-hot-toast";
+import { Abi, formatEther } from "viem";
+import { useAccount, usePublicClient, useWriteContract } from "wagmi";
+import {
+  ArrowPathIcon,
+  DocumentMagnifyingGlassIcon,
+  ExclamationTriangleIcon,
+  ScaleIcon,
+  ShieldCheckIcon,
+} from "@heroicons/react/24/outline";
+import SupplyChainEscrowArtifact from "~~/contracts/SupplyChainEscrow.json";
+import { useScaffoldReadContract, useTransactor } from "~~/hooks/scaffold-eth";
 
 interface DisputedOrder {
   address: string;
@@ -30,8 +29,8 @@ interface DisputedOrder {
 const ArbitrationDashboard: NextPage = () => {
   const { address: connectedAddress } = useAccount();
   const publicClient = usePublicClient();
+  const { writeContractAsync } = useWriteContract();
   const writeTx = useTransactor();
-  const { writeScaffoldContractAsync: writeEscrowAsync } = useScaffoldWriteContract("SupplyChainEscrow");
 
   const [disputedOrders, setDisputedOrders] = useState<DisputedOrder[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,22 +48,50 @@ const ArbitrationDashboard: NextPage = () => {
     setLoading(true);
     try {
       const disputes: DisputedOrder[] = [];
-      
+
       for (const addr of allEscrows) {
         try {
           const [arbitrator, isDisputed] = await Promise.all([
-            publicClient.readContract({ address: addr as `0x${string}`, abi: SupplyChainEscrowArtifact.abi, functionName: "arbitrator" }),
-            publicClient.readContract({ address: addr as `0x${string}`, abi: SupplyChainEscrowArtifact.abi, functionName: "disputed" }),
+            publicClient.readContract({
+              address: addr as `0x${string}`,
+              abi: SupplyChainEscrowArtifact.abi as Abi,
+              functionName: "arbitrator",
+            }),
+            publicClient.readContract({
+              address: addr as `0x${string}`,
+              abi: SupplyChainEscrowArtifact.abi as Abi,
+              functionName: "disputed",
+            }),
           ]);
 
           // Only show if it's disputed AND the connected user is the arbitrator
           if (isDisputed && (arbitrator as string).toLowerCase() === connectedAddress.toLowerCase()) {
             const [buyer, seller, itemName, totalAmount, poCid] = await Promise.all([
-              publicClient.readContract({ address: addr as `0x${string}`, abi: SupplyChainEscrowArtifact.abi, functionName: "buyer" }),
-              publicClient.readContract({ address: addr as `0x${string}`, abi: SupplyChainEscrowArtifact.abi, functionName: "seller" }),
-              publicClient.readContract({ address: addr as `0x${string}`, abi: SupplyChainEscrowArtifact.abi, functionName: "itemName" }),
-              publicClient.readContract({ address: addr as `0x${string}`, abi: SupplyChainEscrowArtifact.abi, functionName: "totalAmount" }),
-              publicClient.readContract({ address: addr as `0x${string}`, abi: SupplyChainEscrowArtifact.abi, functionName: "poCid" }),
+              publicClient.readContract({
+                address: addr as `0x${string}`,
+                abi: SupplyChainEscrowArtifact.abi as Abi,
+                functionName: "buyer",
+              }),
+              publicClient.readContract({
+                address: addr as `0x${string}`,
+                abi: SupplyChainEscrowArtifact.abi as Abi,
+                functionName: "seller",
+              }),
+              publicClient.readContract({
+                address: addr as `0x${string}`,
+                abi: SupplyChainEscrowArtifact.abi as Abi,
+                functionName: "itemName",
+              }),
+              publicClient.readContract({
+                address: addr as `0x${string}`,
+                abi: SupplyChainEscrowArtifact.abi as Abi,
+                functionName: "totalAmount",
+              }),
+              publicClient.readContract({
+                address: addr as `0x${string}`,
+                abi: SupplyChainEscrowArtifact.abi as Abi,
+                functionName: "poCid",
+              }),
             ]);
 
             disputes.push({
@@ -96,13 +123,13 @@ const ArbitrationDashboard: NextPage = () => {
   const handleResolve = async (escrowAddr: string, releaseToSeller: boolean) => {
     setResolvingAddr(escrowAddr);
     try {
-      await writeTx(() => 
-        writeEscrowAsync({
-          contractName: "SupplyChainEscrow",
+      await writeTx(() =>
+        writeContractAsync({
           address: escrowAddr as `0x${string}`,
+          abi: SupplyChainEscrowArtifact.abi as Abi,
           functionName: "resolveDispute",
           args: [releaseToSeller],
-        })
+        }),
       );
       toast.success("Dispute resolved!");
       fetchDisputes();
@@ -141,14 +168,15 @@ const ArbitrationDashboard: NextPage = () => {
               <ScaleIcon className="h-16 w-16 opacity-10" />
             </div>
             <h2 className="text-2xl font-bold opacity-50">No active disputes</h2>
-            <p className="mt-2 opacity-40 text-lg">
-              You are not listed as an arbitrator for any active disputes.
-            </p>
+            <p className="mt-2 opacity-40 text-lg">You are not listed as an arbitrator for any active disputes.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
-            {disputedOrders.map((order) => (
-              <div key={order.address} className="card bg-base-100 shadow-md border-l-4 border-l-error rounded-sm overflow-hidden">
+            {disputedOrders.map(order => (
+              <div
+                key={order.address}
+                className="card bg-base-100 shadow-md border-l-4 border-l-error rounded-sm overflow-hidden"
+              >
                 <div className="card-body p-6">
                   <div className="flex flex-col lg:flex-row justify-between gap-8">
                     <div className="flex-1 space-y-4">
@@ -175,11 +203,11 @@ const ArbitrationDashboard: NextPage = () => {
                       <div className="flex items-center gap-4">
                         <div className="bg-primary/10 px-4 py-2 rounded-sm border border-primary/20">
                           <span className="text-xs opacity-60 block">Disputed Amount</span>
-                          <span className="text-xl font-black text-primary">{order.amount} ETH</span>
+                          <span className="text-xl font-black text-primary">{order.amount} MON</span>
                         </div>
-                        <a 
-                          href={`https://gateway.pinata.cloud/ipfs/${order.poCid}`} 
-                          target="_blank" 
+                        <a
+                          href={`https://gateway.pinata.cloud/ipfs/${order.poCid}`}
+                          target="_blank"
                           rel="noreferrer"
                           className="btn btn-outline btn-sm rounded-sm gap-2"
                         >
@@ -191,14 +219,14 @@ const ArbitrationDashboard: NextPage = () => {
 
                     <div className="lg:w-72 flex flex-col justify-center gap-3 border-t lg:border-t-0 lg:border-l border-base-300 pt-6 lg:pt-0 lg:pl-8">
                       <h3 className="font-bold text-sm uppercase text-center opacity-60 mb-2">Judgment</h3>
-                      <button 
+                      <button
                         className={`btn btn-success btn-block rounded-sm ${resolvingAddr === order.address ? "loading" : ""}`}
                         onClick={() => handleResolve(order.address, true)}
                         disabled={!!resolvingAddr}
                       >
                         Release to Seller
                       </button>
-                      <button 
+                      <button
                         className={`btn btn-error btn-block rounded-sm ${resolvingAddr === order.address ? "loading" : ""}`}
                         onClick={() => handleResolve(order.address, false)}
                         disabled={!!resolvingAddr}

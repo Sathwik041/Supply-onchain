@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { 
-  CheckCircleIcon, 
-  TruckIcon, 
-  CubeIcon, 
-  DocumentCheckIcon, 
-  CurrencyDollarIcon 
+import {
+  CheckCircleIcon,
+  CubeIcon,
+  CurrencyDollarIcon,
+  DocumentCheckIcon,
+  TruckIcon,
 } from "@heroicons/react/24/outline";
 
 export enum EscrowStatus {
@@ -18,7 +18,7 @@ export enum EscrowStatus {
   DELIVERED,
   COMPLETED,
   DISPUTED,
-  CANCELLED
+  CANCELLED,
 }
 
 interface LogisticsTimelineProps {
@@ -30,59 +30,46 @@ interface LogisticsTimelineProps {
 const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, isPaused, isDraft }) => {
   const steps = [
     { name: "Contract", status: EscrowStatus.ACCEPTED, icon: DocumentCheckIcon, description: "Accepted" },
-    { name: "Funding", status: EscrowStatus.PRODUCTION, icon: CurrencyDollarIcon, description: "30% Released", percentage: "30%" },
+    {
+      name: "Funding",
+      status: EscrowStatus.PRODUCTION,
+      icon: CurrencyDollarIcon,
+      description: "30% Released",
+      percentage: "30%",
+    },
     { name: "Production", status: EscrowStatus.PRODUCTION_COMPLETED, icon: CubeIcon, description: "Manufacturing" },
     { name: "Shipped", status: EscrowStatus.SHIPPED, icon: TruckIcon, description: "In transit" },
-    { name: "Delivered", status: EscrowStatus.DELIVERED, icon: CheckCircleIcon, description: "50% Released", percentage: "50%" },
-    { name: "Completed", status: EscrowStatus.COMPLETED, icon: CheckCircleIcon, description: "20% Released", percentage: "20%" },
+    {
+      name: "Delivered",
+      status: EscrowStatus.DELIVERED,
+      icon: CheckCircleIcon,
+      description: "50% Released",
+      percentage: "50%",
+    },
+    {
+      name: "Completed",
+      status: EscrowStatus.COMPLETED,
+      icon: CheckCircleIcon,
+      description: "20% Released",
+      percentage: "20%",
+    },
   ];
-
-  const getStepClass = (stepStatus: EscrowStatus) => {
-    if (currentStatus === EscrowStatus.CANCELLED) return "step-error";
-    if (isPaused && stepStatus === currentStatus) return "step-warning";
-    if (isDraft && stepStatus === EscrowStatus.CREATED) return "step-primary";
-    if (currentStatus > stepStatus) return "step-success";
-    if (currentStatus === stepStatus) return "step-success"; // Current milestone is achieved
-    
-    // Highlight the next step as primary/active if not completed/cancelled/paused AND not in draft
-    const currentIndexInSteps = steps.findIndex(s => s.status === currentStatus);
-    const stepIndex = steps.findIndex(s => s.status === stepStatus);
-    if (!isDraft && !isPaused && stepIndex === currentIndexInSteps + 1 && currentStatus < EscrowStatus.COMPLETED) return "step-primary";
-    
-    return "";
-  };
-
-  const getIconContainerClass = (stepStatus: EscrowStatus) => {
-    if (currentStatus === EscrowStatus.CANCELLED) return "bg-error/10 text-error border-error/30";
-    if (isPaused && stepStatus === currentStatus) return "bg-warning/10 text-warning border-warning/30 animate-pulse";
-    if (isDraft && stepStatus === EscrowStatus.CREATED) return "bg-primary/10 text-primary border-primary animate-pulse";
-    if (currentStatus >= stepStatus) return "bg-success/10 text-success border-success/30";
-    
-    // Check if it's the next active step
-    const currentIndexInSteps = steps.findIndex(s => s.status === currentStatus);
-    const stepIndex = steps.findIndex(s => s.status === stepStatus);
-    if (!isDraft && !isPaused && stepIndex === currentIndexInSteps + 1 && currentStatus < EscrowStatus.COMPLETED) {
-        return "bg-primary/10 text-primary border-primary animate-pulse";
-    }
-    
-    return "bg-base-200 text-base-content/20 border-base-300";
-  };
 
   const getLabelClass = (stepStatus: EscrowStatus) => {
     if (currentStatus === EscrowStatus.CANCELLED) {
-        if (stepStatus <= currentStatus) return "text-error font-bold";
-        return "text-base-content/40 font-medium";
+      if (stepStatus <= currentStatus) return "text-error font-bold";
+      return "text-base-content/40 font-medium";
     }
     if (isPaused && stepStatus === currentStatus) return "text-warning font-bold";
     if (isDraft && stepStatus === EscrowStatus.CREATED) return "text-primary font-bold";
     if (currentStatus >= stepStatus) return "text-success font-bold";
-    
+
     const currentIndexInSteps = steps.findIndex(s => s.status === currentStatus);
     const stepIndex = steps.findIndex(s => s.status === stepStatus);
     if (!isDraft && !isPaused && stepIndex === currentIndexInSteps + 1 && currentStatus < EscrowStatus.COMPLETED) {
-        return "text-primary font-bold";
+      return "text-primary font-bold";
     }
-    
+
     return "text-base-content/40 font-medium";
   };
 
@@ -105,65 +92,136 @@ const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, is
           </div>
         )}
       </div>
-      
-      <ul className="steps steps-vertical lg:steps-horizontal w-full">
-        {steps.map((step, index) => {
-          const currentIndex = steps.findIndex(s => s.status === currentStatus);
-          
-          // Special logic for the first step (Contract): 
-          // Reached only after status becomes ACCEPTED (1)
-          const isReached = isDraft ? false : 
-                           (step.name === "Contract" ? currentStatus >= EscrowStatus.ACCEPTED : currentStatus >= step.status);
-          
-          // Special logic for the next active step
-          const isActive = (isDraft && step.name === "Contract") || 
-                          (!isDraft && !isPaused && !isReached && (
-                            (step.name === "Contract" && currentStatus === EscrowStatus.CREATED) ||
-                            (step.name === "Funding" && currentStatus === EscrowStatus.ACCEPTED) ||
-                            (index === currentIndex + 1 && currentStatus >= EscrowStatus.PRODUCTION && currentStatus < EscrowStatus.COMPLETED)
-                          ));
 
-          return (
-            <li 
-              key={step.name} 
-              className={`step ${getStepClass(step.status)} transition-all duration-500 text-[10px]`}
-              data-content={isReached ? "✓" : isActive ? "●" : ""}
-            >
-              <div className="flex flex-col items-center mt-2 group relative">
-                {step.percentage && (
-                  <div className={`absolute -top-10 px-2 py-0.5 rounded-full text-[9px] font-black border ${
-                    isReached ? "bg-success text-success-content border-success" : 
-                    isActive ? "bg-primary text-primary-content border-primary" : 
-                    "bg-base-200 text-base-content/40 border-base-300"
-                  }`}>
-                    {step.percentage}
+      <div className="relative w-full mt-4 mb-8">
+        {/* Background Track Line */}
+        <div className="absolute top-[32px] left-[10%] right-[10%] h-1 bg-base-300 rounded-full z-0 hidden lg:block"></div>
+
+        {/* Dynamic Foreground 'Glowing' Line */}
+        <div
+          className="absolute top-[32px] left-[10%] h-1 bg-primary rounded-full z-0 transition-all duration-1000 ease-in-out hidden lg:block shadow-[0_0_10px_rgba(var(--primary))]"
+          style={{
+            width: `${Math.min(100, Math.max(0, (steps.findIndex(s => currentStatus >= s.status) / (steps.length - 1)) * 80))}%`,
+          }}
+        ></div>
+
+        <ul className="flex flex-col lg:flex-row justify-between w-full relative z-10 gap-8 lg:gap-0">
+          {steps.map((step, index) => {
+            const currentIndex = steps.findIndex(s => s.status === currentStatus);
+
+            // Special logic for the first step (Contract):
+            const isReached = isDraft
+              ? false
+              : step.name === "Contract"
+                ? currentStatus >= EscrowStatus.ACCEPTED
+                : currentStatus >= step.status;
+
+            // Special logic for the next active step
+            const isActive =
+              (isDraft && step.name === "Contract") ||
+              (!isDraft &&
+                !isPaused &&
+                !isReached &&
+                ((step.name === "Contract" && currentStatus === EscrowStatus.CREATED) ||
+                  (step.name === "Funding" && currentStatus === EscrowStatus.ACCEPTED) ||
+                  (index === currentIndex + 1 &&
+                    currentStatus >= EscrowStatus.PRODUCTION &&
+                    currentStatus < EscrowStatus.COMPLETED)));
+
+            return (
+              <li key={step.name} className={`flex-1 flex flex-col items-center transition-all duration-500`}>
+                <div className="flex flex-col items-center group relative w-full">
+                  {/* Vertical Line for Mobile (hidden on LG) */}
+                  {index !== steps.length - 1 && (
+                    <div className="absolute top-16 left-1/2 w-0.5 h-12 bg-base-300 -translate-x-1/2 lg:hidden"></div>
+                  )}
+
+                  {/* Percentage Tooltip */}
+                  {step.percentage && (
+                    <div
+                      className={`absolute -top-8 px-2.5 py-0.5 rounded-full text-[10px] font-black border opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-md whitespace-nowrap ${
+                        isReached
+                          ? "bg-success text-success-content border-success"
+                          : isActive
+                            ? "bg-primary text-primary-content border-primary"
+                            : "bg-base-200 text-base-content/40 border-base-300"
+                      }`}
+                    >
+                      {step.percentage}
+                    </div>
+                  )}
+
+                  {/* Icon Node Container */}
+                  <div
+                    className={`relative w-16 h-16 rounded-full flex items-center justify-center border-4 mb-3 transition-all duration-500 bg-base-100
+                      ${isReached ? "border-success text-success scale-100" : ""}
+                      ${isActive ? "border-primary text-primary ring-4 ring-primary/20 animate-pulse scale-110" : ""}
+                      ${!isReached && !isActive ? "border-base-300 text-base-content/30 scale-90" : ""}
+                    `}
+                  >
+                    <step.icon className="h-7 w-7" />
+
+                    {/* Status Badge overlay on the Icon */}
+                    {isReached && (
+                      <div className="absolute -bottom-1 -right-1 bg-success text-success-content rounded-full p-1 border-2 border-base-100">
+                        <CheckCircleIcon className="w-3 h-3" strokeWidth={3} />
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className={`p-2.5 rounded-lg border-2 mb-2 transition-all duration-300 group-hover:scale-110 ${getIconContainerClass(step.status)}`}>
-                  <step.icon className="h-5 w-5" />
+
+                  {/* Label & Description */}
+                  <div className="text-center w-full px-2">
+                    <span className={`block font-bold text-sm tracking-tight ${getLabelClass(step.status)}`}>
+                      {step.name}
+                    </span>
+                    <span className="block text-[10px] uppercase font-bold text-base-content/40 mt-1 tracking-wider">
+                      {isReached ? "Completed" : isActive ? "Action Required" : "Pending"}
+                    </span>
+                    <span className="block text-xs mt-1 text-base-content/60 font-medium max-w-[120px] mx-auto leading-tight">
+                      {step.description}
+                    </span>
+                  </div>
                 </div>
-                <span className={`text-xs tracking-tight ${getLabelClass(step.status)}`}>
-                  {step.name}
-                </span>
-                <span className="text-[9px] uppercase font-bold opacity-30 mt-0.5 tracking-tighter">
-                  {isReached ? "Completed" : isActive ? "In Progress" : "Not Started"}
-                </span>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
       {isPaused && (
         <div className="mt-8 alert alert-warning shadow-lg rounded-sm mx-4 w-auto text-warning-content">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="stroke-current shrink-0 h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
           <span>Dispute Raised! Logistics and payments are frozen until resolution.</span>
         </div>
       )}
 
       {currentStatus === EscrowStatus.CANCELLED && (
         <div className="mt-8 alert alert-error shadow-lg rounded-sm mx-4 w-auto text-error-content">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="stroke-current shrink-0 h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
           <span>This contract has been Declined/Cancelled.</span>
         </div>
       )}
