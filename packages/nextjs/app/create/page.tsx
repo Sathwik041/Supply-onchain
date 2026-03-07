@@ -231,8 +231,8 @@ const CreateContract: NextPage = () => {
 
   return (
     <div className="flex flex-col grow bg-base-200 pb-20 relative">
-      <div className="max-w-7xl w-full mx-auto px-4 mt-8">
-        <div className="mb-10">
+      <div className="max-w-7xl w-full mx-auto px-4 mt-1">
+        <div className="mb-6">
           <LogisticsTimeline currentStatus={status} isDraft={true} />
         </div>
 
@@ -369,7 +369,7 @@ const CreateContract: NextPage = () => {
                       </label>
                       <input
                         type="text"
-                        placeholder="Industrial Pump"
+                        placeholder="Item/Machine Name..."
                         className="input input-bordered w-full focus:input-primary rounded-sm"
                         value={itemName}
                         onChange={e => setItemName(e.target.value)}
@@ -381,7 +381,7 @@ const CreateContract: NextPage = () => {
                       </label>
                       <input
                         type="number"
-                        placeholder="10"
+                        placeholder="0"
                         className="input input-bordered w-full focus:input-primary rounded-sm"
                         value={quantity}
                         onChange={e => setQuantity(e.target.value)}
@@ -395,7 +395,7 @@ const CreateContract: NextPage = () => {
                     <input
                       type="number"
                       step="0.01"
-                      placeholder="1.5"
+                      placeholder="0.0..."
                       className="input input-bordered w-full focus:input-primary rounded-sm"
                       value={totalAmount}
                       onChange={e => setTotalAmount(e.target.value)}
@@ -407,7 +407,7 @@ const CreateContract: NextPage = () => {
                     </label>
                     <input
                       type="number"
-                      placeholder="30"
+                      placeholder="0"
                       className="input input-bordered w-full focus:input-primary rounded-sm"
                       value={deliveryDays}
                       onChange={e => setDeliveryDays(e.target.value)}
@@ -417,7 +417,7 @@ const CreateContract: NextPage = () => {
                   <div className="form-control w-full pt-2">
                     <label className="label">
                       <span className="label-text font-semibold text-xs uppercase opacity-60">
-                        Record-Keeping (IPFS) <span className="text-error font-bold">* Mandatory</span>
+                        Purchase Order (IPFS) <span className="text-error font-bold">* Mandatory</span>
                       </span>
                     </label>
                     <div className="flex items-center gap-4">
