@@ -7,18 +7,18 @@ const Home: NextPage = () => {
   return (
     <>
       <div className="flex items-center flex-col grow pt-10 px-4">
-        <div className="max-w-4xl text-center">
+        <div className="max-w-5xl text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
-            SUPPLYCHAIN{" "}
-            <span className="text-primary text-3xl md:text-5xl block mt-2">
-              The Gold Standard for Industrial Escrow
+            SUPPLY-ONCHAIN{" "}
+            <span className="text-primary text-2xl md:text-4xl lg:text-5xl block mt-2 whitespace-nowrap">
+              The Gold Standard for Industrial Items Trade
             </span>
           </h1>
 
           <div className="mb-10 text-xl md:text-2xl text-base-content/80 space-y-4">
             <p>
               A robust, smart-contract-driven protocol designed to eliminate counterparty risk in global manufacturing
-              and logistics.
+              and logistics for industrial assets.
             </p>
             <p className="font-semibold text-primary/90">
               30% Initial Production &bull; 50% Verified Delivery &bull; 20% Final Inspection

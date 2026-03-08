@@ -63,7 +63,7 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         string poCid
     );
 
-    event SellerAccepted();
+    event SellerAccepted(address indexed seller, string poCid);
     event ProductionPaymentReleased(uint256 amount);
     event ProductionUpdate(string cid);
     event ProductionFinished();
@@ -148,7 +148,7 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         require(block.timestamp <= createdAt + 24 hours, "Offer expired");
         sellerAccepted = true;
         status = Status.ACCEPTED;
-        emit SellerAccepted();
+        emit SellerAccepted(msg.sender, poCid);
     }
 
     /// Buyer deposits MON and starts production
