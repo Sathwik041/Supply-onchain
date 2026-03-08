@@ -8,7 +8,6 @@ import { hardhat } from "viem/chains";
 import {
   Bars3Icon,
   HomeIcon,
-  IdentificationIcon,
   InformationCircleIcon,
   PlusCircleIcon,
   QuestionMarkCircleIcon,
