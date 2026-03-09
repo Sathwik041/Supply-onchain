@@ -123,73 +123,77 @@ export function useEscrowNotifications() {
 
     if (allAddrs.length === 0) return;
 
-    const escrowAbi = SupplyChainEscrowArtifact.abi as Abi;
-    const oldMap = loadStatusMap(connectedAddress);
-    const newMap: StatusMap = {};
-    const freshNotifications: EscrowNotification[] = [];
+    try {
+      const escrowAbi = SupplyChainEscrowArtifact.abi as Abi;
+      const oldMap = loadStatusMap(connectedAddress);
+      const newMap: StatusMap = {};
+      const freshNotifications: EscrowNotification[] = [];
 
-    await Promise.all(
-      allAddrs.map(async addr => {
-        try {
-          const [statusRaw, itemNameRaw] = await Promise.all([
-            publicClient.readContract({
-              address: addr as `0x${string}`,
-              abi: escrowAbi,
-              functionName: "status",
-            }),
-            publicClient.readContract({
-              address: addr as `0x${string}`,
-              abi: escrowAbi,
-              functionName: "itemName",
-            }),
-          ]);
+      await Promise.all(
+        allAddrs.map(async addr => {
+          try {
+            const [statusRaw, itemNameRaw] = await Promise.all([
+              publicClient.readContract({
+                address: addr as `0x${string}`,
+                abi: escrowAbi,
+                functionName: "status",
+              }),
+              publicClient.readContract({
+                address: addr as `0x${string}`,
+                abi: escrowAbi,
+                functionName: "itemName",
+              }),
+            ]);
 
-          const currentStatus = Number(statusRaw);
-          const itemName = itemNameRaw as string;
-          newMap[addr] = currentStatus;
+            const currentStatus = Number(statusRaw);
+            const itemName = itemNameRaw as string;
+            newMap[addr] = currentStatus;
 
-          const previousStatus = oldMap[addr];
+            const previousStatus = oldMap[addr];
 
-          // Only create notifications if this isn't the very first load
-          if (previousStatus !== undefined && previousStatus !== currentStatus && !isInitialLoad.current) {
-            const statusLabel = STATUS_LABELS[currentStatus] || "Unknown";
-            const message = STATUS_MESSAGES[currentStatus] || `Status changed to ${statusLabel}`;
+            // Only create notifications if this isn't the very first load
+            if (previousStatus !== undefined && previousStatus !== currentStatus && !isInitialLoad.current) {
+              const statusLabel = STATUS_LABELS[currentStatus] || "Unknown";
+              const message = STATUS_MESSAGES[currentStatus] || `Status changed to ${statusLabel}`;
 
-            freshNotifications.push({
-              id: `${addr}_${Date.now()}_${currentStatus}`,
-              escrowAddress: addr,
-              itemName,
-              oldStatus: previousStatus,
-              newStatus: currentStatus,
-              message: `${itemName}: ${message}`,
-              timestamp: Date.now(),
-              read: false,
-            });
+              freshNotifications.push({
+                id: `${addr}_${Date.now()}_${currentStatus}`,
+                escrowAddress: addr,
+                itemName,
+                oldStatus: previousStatus,
+                newStatus: currentStatus,
+                message: `${itemName}: ${message}`,
+                timestamp: Date.now(),
+                read: false,
+              });
+            }
+          } catch {
+            // individual escrow read failures shouldn't break the loop
           }
-        } catch {
-          // individual escrow read failures shouldn't break the loop
-        }
-      }),
-    );
+        }),
+      );
 
-    // Persist the latest status map
-    saveStatusMap(connectedAddress, newMap);
+      // Persist the latest status map
+      saveStatusMap(connectedAddress, newMap);
 
-    // After first successful load, flip the flag
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
+      // After first successful load, flip the flag
+      if (isInitialLoad.current) {
+        isInitialLoad.current = false;
+      }
+
+      if (freshNotifications.length > 0) {
+        setNotifications(prev => {
+          // keep most recent 50
+          const merged = [...freshNotifications, ...prev].slice(0, 50);
+          saveNotifications(connectedAddress, merged);
+          return merged;
+        });
+      }
+
+      return freshNotifications;
+    } catch {
+      // Silently handle RPC/network errors during polling
     }
-
-    if (freshNotifications.length > 0) {
-      setNotifications(prev => {
-        // keep most recent 50
-        const merged = [...freshNotifications, ...prev].slice(0, 50);
-        saveNotifications(connectedAddress, merged);
-        return merged;
-      });
-    }
-
-    return freshNotifications;
   }, [connectedAddress, publicClient, buyerEscrows, sellerEscrows]);
 
   // ── Set up interval ──

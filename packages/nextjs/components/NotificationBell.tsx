@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BellAlertIcon, BellIcon, CheckIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useAccount } from "wagmi";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 import { useEscrowNotifications } from "~~/hooks/scaffold-eth/useEscrowNotifications";
 
@@ -60,7 +61,8 @@ function timeAgo(timestamp: number): string {
   return `${days}d ago`;
 }
 
-export const NotificationBell = () => {
+// Inner component that only renders when wallet is connected
+const NotificationBellInner = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
