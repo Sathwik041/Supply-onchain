@@ -2,8 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BellAlertIcon, BellIcon, CheckIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useAccount } from "wagmi";
+import { BellAlertIcon, BellIcon, CheckIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 import { useEscrowNotifications } from "~~/hooks/scaffold-eth/useEscrowNotifications";
 
@@ -193,4 +193,10 @@ const NotificationBellInner = () => {
       )}
     </div>
   );
+};
+
+export const NotificationBell = () => {
+  const { address } = useAccount();
+  if (!address) return null;
+  return <NotificationBellInner />;
 };
