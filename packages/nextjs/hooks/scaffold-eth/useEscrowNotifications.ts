@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Abi } from "abitype";
+import toast from "react-hot-toast";
 import { useAccount, usePublicClient } from "wagmi";
 import SupplyChainEscrowArtifact from "~~/contracts/SupplyChainEscrow.json";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
@@ -121,7 +122,12 @@ export function useEscrowNotifications() {
 
     const allAddrs = Array.from(new Set([...(buyerEscrows || []), ...(sellerEscrows || [])]));
 
-    if (allAddrs.length === 0) return;
+    if (allAddrs.length === 0) {
+      if (isInitialLoad.current) {
+        isInitialLoad.current = false;
+      }
+      return;
+    }
 
     try {
       const escrowAbi = SupplyChainEscrowArtifact.abi as Abi;
@@ -150,9 +156,27 @@ export function useEscrowNotifications() {
             newMap[addr] = currentStatus;
 
             const previousStatus = oldMap[addr];
+            const hasHistory = Object.keys(oldMap).length > 0;
 
-            // Only create notifications if this isn't the very first load
-            if (previousStatus !== undefined && previousStatus !== currentStatus && !isInitialLoad.current) {
+            if (previousStatus === undefined) {
+              // If we have history or it's not the first load, an undefined previousStatus means a NEW contract
+              if (hasHistory || !isInitialLoad.current) {
+                const message = `${itemName}: New contract created!`;
+                freshNotifications.push({
+                  id: `${addr}_create_${Date.now()}`,
+                  escrowAddress: addr,
+                  itemName,
+                  oldStatus: 0, // treat creation as 0
+                  newStatus: currentStatus,
+                  message,
+                  timestamp: Date.now(),
+                  read: false,
+                });
+
+                // Fire a toast alert for the new contract
+                toast.success(message);
+              }
+            } else if (previousStatus !== currentStatus && !isInitialLoad.current) {
               const statusLabel = STATUS_LABELS[currentStatus] || "Unknown";
               const message = STATUS_MESSAGES[currentStatus] || `Status changed to ${statusLabel}`;
 
@@ -166,6 +190,13 @@ export function useEscrowNotifications() {
                 timestamp: Date.now(),
                 read: false,
               });
+
+              // Fire a toast alert for status changes
+              if (currentStatus === 7 || currentStatus === 8) {
+                toast.error(`${itemName}: ${message}`);
+              } else {
+                toast.success(`${itemName}: ${message}`);
+              }
             }
           } catch {
             // individual escrow read failures shouldn't break the loop
