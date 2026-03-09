@@ -13,6 +13,7 @@ import {
   QuestionMarkCircleIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
+import { NotificationBell } from "~~/components/NotificationBell";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 
@@ -117,6 +118,7 @@ export const Header = () => {
         </ul>
       </div>
       <div className="navbar-end grow mr-4 gap-2">
+        <NotificationBell />
         <RainbowKitCustomConnectButton />
         {isLocalNetwork && <FaucetButton />}
       </div>
