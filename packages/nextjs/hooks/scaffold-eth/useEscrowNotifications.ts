@@ -94,16 +94,18 @@ export function useEscrowNotifications() {
   const isInitialLoad = useRef(true);
 
   // Fetch escrow lists
-  const { data: buyerEscrows } = useScaffoldReadContract({
+  const { data: buyerEscrows, isLoading: isLoadingBuyer } = useScaffoldReadContract({
     contractName: "EscrowFactory",
     functionName: "getBuyerEscrows",
     args: [connectedAddress],
   });
-  const { data: sellerEscrows } = useScaffoldReadContract({
+  const { data: sellerEscrows, isLoading: isLoadingSeller } = useScaffoldReadContract({
     contractName: "EscrowFactory",
     functionName: "getSellerEscrows",
     args: [connectedAddress],
   });
+
+  const isLoadingEscrows = isLoadingBuyer || isLoadingSeller;
 
   // Load persisted notifications when wallet changes
   useEffect(() => {
@@ -120,9 +122,13 @@ export function useEscrowNotifications() {
   const pollStatuses = useCallback(async () => {
     if (!connectedAddress || !publicClient) return;
 
+    // Wait until the initial RPC reads are completely finished
+    if (isLoadingEscrows) return;
+
     const allAddrs = Array.from(new Set([...(buyerEscrows || []), ...(sellerEscrows || [])]));
 
     if (allAddrs.length === 0) {
+      // User genuinely has 0 escrows
       if (isInitialLoad.current) {
         isInitialLoad.current = false;
       }
