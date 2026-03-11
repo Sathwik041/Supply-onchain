@@ -214,7 +214,7 @@ const Dashboard: NextPage = () => {
         </div>
 
         {/* ── Hero Stats ── */}
-        <div className="stats stats-vertical lg:stats-horizontal w-full shadow-sm border border-secondary/10 rounded-sm mb-8">
+        <div className="stats stats-vertical lg:stats-horizontal w-full shadow-sm border border-secondary/10 rounded-sm mb-6">
           <StatCard
             title="Total Escrows"
             value={stats.totalEscrows}
@@ -240,6 +240,54 @@ const Dashboard: NextPage = () => {
             subtitle="From creation to delivery"
             icon={ClockIcon}
           />
+        </div>
+
+        {/* ── Quick Actions (Prominent Row) ── */}
+        <div className="card bg-base-100 shadow-sm border border-secondary/10 rounded-sm mb-8">
+          <div className="card-body p-4 sm:p-5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <Link
+                href="/create"
+                className="btn btn-primary flex-1 hover:scale-[1.02] transition-transform flex gap-2 rounded-sm h-14"
+              >
+                <PlusCircleIcon className="h-6 w-6 opacity-80" />
+                <div className="flex flex-col items-start gap-0.5 mt-0.5">
+                  <span className="leading-none text-sm">New Contract</span>
+                  <span className="text-[10px] opacity-70 font-normal normal-case leading-none">Create escrow</span>
+                </div>
+              </Link>
+              <Link
+                href="/orders"
+                className="btn btn-secondary flex-1 hover:scale-[1.02] transition-transform flex gap-2 rounded-sm h-14"
+              >
+                <ListBulletIcon className="h-6 w-6 opacity-80" />
+                <div className="flex flex-col items-start gap-0.5 mt-0.5">
+                  <span className="leading-none text-sm">All Orders</span>
+                  <span className="text-[10px] opacity-70 font-normal normal-case leading-none">View details</span>
+                </div>
+              </Link>
+              <Link
+                href="/machine-passports"
+                className="btn btn-accent flex-1 hover:scale-[1.02] transition-transform flex gap-2 rounded-sm h-14"
+              >
+                <ShieldCheckIcon className="h-6 w-6 opacity-80" />
+                <div className="flex flex-col items-start gap-0.5 mt-0.5">
+                  <span className="leading-none text-sm">Passports</span>
+                  <span className="text-[10px] opacity-70 font-normal normal-case leading-none">Verify parts</span>
+                </div>
+              </Link>
+              <Link
+                href="/dispute-orders"
+                className="btn btn-warning flex-1 hover:scale-[1.02] transition-transform flex gap-2 rounded-sm h-14"
+              >
+                <ExclamationTriangleIcon className="h-6 w-6 opacity-80" />
+                <div className="flex flex-col items-start gap-0.5 mt-0.5">
+                  <span className="leading-none text-sm">Disputes</span>
+                  <span className="text-[10px] opacity-70 font-normal normal-case leading-none">Manage issues</span>
+                </div>
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* ── Charts Row ── */}
@@ -360,43 +408,6 @@ const Dashboard: NextPage = () => {
                   <p className="text-sm">No activity yet</p>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Quick Actions ── */}
-        <div className="card bg-base-100 shadow-sm border border-secondary/10 rounded-sm mb-8">
-          <div className="card-body p-5">
-            <h2 className="card-title text-sm font-bold uppercase opacity-50 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Link
-                href="/create"
-                className="btn btn-primary btn-md hover:scale-[1.02] transition-transform flex gap-2 rounded-sm"
-              >
-                <PlusCircleIcon className="h-5 w-5" />
-                Create Contract
-              </Link>
-              <Link
-                href="/orders"
-                className="btn btn-secondary btn-md hover:scale-[1.02] transition-transform flex gap-2 rounded-sm"
-              >
-                <ListBulletIcon className="h-5 w-5" />
-                View Orders
-              </Link>
-              <Link
-                href="/machine-passports"
-                className="btn btn-accent btn-md hover:scale-[1.02] transition-transform flex gap-2 rounded-sm"
-              >
-                <ShieldCheckIcon className="h-5 w-5" />
-                Passports
-              </Link>
-              <Link
-                href="/dispute-orders"
-                className="btn btn-warning btn-md hover:scale-[1.02] transition-transform flex gap-2 rounded-sm"
-              >
-                <ExclamationTriangleIcon className="h-5 w-5" />
-                Disputes
-              </Link>
             </div>
           </div>
         </div>

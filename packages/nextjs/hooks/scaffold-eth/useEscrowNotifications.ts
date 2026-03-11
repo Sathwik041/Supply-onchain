@@ -157,12 +157,27 @@ export function useEscrowNotifications() {
               }),
             ]);
 
-            const currentStatus = Number(statusRaw);
+            let currentStatus = Number(statusRaw);
             const itemName = itemNameRaw as string;
-            newMap[addr] = currentStatus;
 
             const previousStatus = oldMap[addr];
             const hasHistory = Object.keys(oldMap).length > 0;
+
+            // Protection against stale RPC blocks:
+            // Statuses 0-6 are strictly chronological.
+            // If the RPC node returns a status less than what we already know (and it's not a terminal 7/8 state),
+            // it's almost certainly a load-balanced stale read. Ignore it.
+            if (
+              previousStatus !== undefined &&
+              currentStatus < previousStatus &&
+              currentStatus < 7 &&
+              previousStatus < 7
+            ) {
+              currentStatus = previousStatus; // Pretend we read the correct newer status
+            }
+
+            // Save the resolved status to the new map
+            newMap[addr] = currentStatus;
 
             if (previousStatus === undefined) {
               // If we have history or it's not the first load, an undefined previousStatus means a NEW contract
