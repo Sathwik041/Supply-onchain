@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { NextPage } from "next";
 import { useAccount, usePublicClient } from "wagmi";
 import {
@@ -136,10 +137,11 @@ const MachinePassports: NextPage = () => {
                     </div>
                     <div className="relative aspect-video bg-base-300 rounded-lg overflow-hidden mb-4">
                       {nft.metadata?.image ? (
-                        <img
+                        <Image
                           src={nft.metadata.image.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")}
                           alt={nft.metadata.name || "Machine"}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-secondary/5 text-secondary/20">
