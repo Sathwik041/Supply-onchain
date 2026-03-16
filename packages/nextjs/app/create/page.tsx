@@ -183,6 +183,43 @@ const CreateContract: NextPage = () => {
     const notificationId = toast.loading("Creating Escrow via Factory...");
 
     try {
+      // 1. Create and Pin Metadata JSON
+      const metadata = {
+        name: `Industrial Machine: ${itemName}`,
+        description: `Digital passport for ${itemName}. Secure provenance for industrial equipment.`,
+        image: "ipfs://QmWrz2an5bEgnnBxVdQKTnnGH9EmiiKRj4cEscCfS5y7nP", // Real industrial asset thumbnail
+        attributes: [
+          { trait_type: "Item Name", value: itemName },
+          { trait_type: "Quantity", value: quantity },
+          { trait_type: "Manufacturer", value: sellerAddress },
+          { trait_type: "Creation Date", value: new Date().toISOString() },
+          { trait_type: "Category", value: "Industrial Equipment" },
+        ],
+        properties: {
+          po_cid: poCid,
+          category: "Industrial Machine",
+        },
+      };
+
+      const metadataRes = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          pinata_api_key: process.env.NEXT_PUBLIC_PINATA_API_KEY || "",
+          pinata_secret_api_key: process.env.NEXT_PUBLIC_PINATA_API_SECRET || "",
+        },
+        body: JSON.stringify({
+          pinataContent: metadata,
+          pinataMetadata: { name: `Metadata_${itemName}_${Date.now()}` },
+        }),
+      });
+
+      const metadataData = await metadataRes.json();
+      if (!metadataData.IpfsHash) throw new Error("Metadata upload failed");
+
+      const finalPoCid = metadataData.IpfsHash;
+
+      // 2. Create Escrow on-chain
       const txHash = await createEscrowAsync({
         functionName: "createEscrow",
         args: [
@@ -192,7 +229,7 @@ const CreateContract: NextPage = () => {
           itemName,
           BigInt(quantity),
           BigInt(parseInt(deliveryDays) * 86400),
-          poCid || "",
+          finalPoCid,
         ],
       });
 
@@ -537,6 +574,7 @@ const CreateContract: NextPage = () => {
                     </div>
                     <span className={poCid ? "font-medium" : "opacity-50"}>PO Pinned to IPFS</span>
                   </div>
+
                   <div className="flex items-center gap-3 text-sm">
                     <div
                       className={`p-1.5 rounded-full ${isDeploying ? "bg-primary/20 text-primary animate-pulse" : "bg-base-200 opacity-50"}`}

@@ -49,6 +49,7 @@ interface Order {
   productionLogs: string[];
   createdAt: bigint;
   deposited?: boolean;
+  metadata?: any;
 }
 
 const OrderManagement: NextPage = () => {
@@ -226,6 +227,19 @@ const OrderManagement: NextPage = () => {
         }),
       ]);
 
+      let metadata = null;
+      try {
+        const metaRes = await fetch(`https://gateway.pinata.cloud/ipfs/${poCid}`);
+        const text = await metaRes.text();
+        try {
+          metadata = JSON.parse(text);
+        } catch {
+          // Not JSON, ignore
+        }
+      } catch (e) {
+        console.warn("Could not fetch metadata", e);
+      }
+
       setOrder({
         address: contractAddress,
         buyer: buyer as string,
@@ -248,6 +262,7 @@ const OrderManagement: NextPage = () => {
         createdAt: createdAtFromContract as bigint,
         disputeReason: disputeReasonFromContract as string,
         deposited: depositedFromContract as boolean,
+        metadata: metadata,
       });
     } catch (error) {
       console.error("Error fetching order details:", error);
@@ -952,16 +967,16 @@ const OrderManagement: NextPage = () => {
                         </div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex flex-col sm:flex-row w-full max-w-lg gap-4">
                         <button
-                          onClick={() => router.push("/orders")}
+                          onClick={() => router.push("/machine-passports")}
                           className="btn btn-secondary btn-wide rounded-sm shadow-md gap-2"
                         >
                           <IdentificationIcon className="h-5 w-5" />
                           View Machine Passport
                         </button>
                         <a
-                          href={`https://gateway.pinata.cloud/ipfs/${order.poCid}`}
+                          href={`https://gateway.pinata.cloud/ipfs/${order.metadata?.properties?.po_cid || order.poCid}`}
                           target="_blank"
                           rel="noreferrer"
                           className="btn btn-outline btn-wide rounded-sm gap-2"
@@ -1135,7 +1150,7 @@ const OrderManagement: NextPage = () => {
                         <span className="text-xs font-bold">Purchase Order</span>
                       </div>
                       <a
-                        href={`https://gateway.pinata.cloud/ipfs/${order.poCid}`}
+                        href={`https://gateway.pinata.cloud/ipfs/${order.metadata?.properties?.po_cid || order.poCid}`}
                         target="_blank"
                         rel="noreferrer"
                         className="btn btn-ghost btn-xs btn-square"

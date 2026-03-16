@@ -15,6 +15,7 @@ import { useScaffoldReadContract, useTargetNetwork } from "~~/hooks/scaffold-eth
 interface PassportNFT {
   tokenId: number;
   uri: string;
+  metadata?: any;
 }
 
 const MachinePassports: NextPage = () => {
@@ -62,8 +63,22 @@ const MachinePassports: NextPage = () => {
             args: [tokenId],
           });
 
-          nftData.push({ tokenId: Number(tokenId), uri: uri as string });
+          let metadata = null;
+          try {
+            const metaRes = await fetch(`https://gateway.pinata.cloud/ipfs/${uri}`);
+            const text = await metaRes.text();
+            try {
+              metadata = JSON.parse(text);
+            } catch {
+              // Not JSON
+            }
+          } catch (e) {
+            console.warn("Could not fetch metadata for token", tokenId, e);
+          }
+
+          nftData.push({ tokenId: Number(tokenId), uri: uri as string, metadata });
         }
+
         setPassports(nftData);
       } catch (error) {
         console.error("Error fetching passports:", error);
@@ -119,26 +134,42 @@ const MachinePassports: NextPage = () => {
                         <p className="text-lg font-mono font-black">#00{nft.tokenId}</p>
                       </div>
                     </div>
-                    <h3 className="text-xl font-black mb-1 leading-tight">Industrial Machine Asset</h3>
+                    <div className="relative aspect-video bg-base-300 rounded-lg overflow-hidden mb-4">
+                      {nft.metadata?.image ? (
+                        <img
+                          src={nft.metadata.image.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")}
+                          alt={nft.metadata.name || "Machine"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-secondary/5 text-secondary/20">
+                          <IdentificationIcon className="h-20 w-20" />
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-black mb-1 leading-tight">
+                      {nft.metadata?.name || "Industrial Machine Asset"}
+                    </h3>
                     <div className="badge badge-secondary badge-outline font-bold text-[10px] uppercase px-2 py-2 mb-4">
-                      Verified Proof-of-Specs
+                      {nft.metadata?.attributes?.find((a: any) => a.trait_type === "Category")?.value ||
+                        "Verified Proof-of-Specs"}
                     </div>
 
                     <div className="border-t border-base-200 pt-4 mt-2 flex flex-col gap-3">
                       <div className="flex justify-between items-center">
                         <div className="flex flex-col">
-                          <span className="text-[10px] font-bold uppercase opacity-40 mb-1">Specs Hash:</span>
-                          <span className="text-sm font-mono font-semibold text-primary">
-                            {nft.uri.slice(0, 16)}...
+                          <span className="text-[10px] font-bold uppercase opacity-40 mb-1">Specs:</span>
+                          <span className="text-sm font-semibold truncate w-24">
+                            {nft.metadata?.attributes?.find((a: any) => a.trait_type === "Item Name")?.value || "N/A"}
                           </span>
                         </div>
                         <a
-                          href={`https://gateway.pinata.cloud/ipfs/${nft.uri}`}
+                          href={`https://gateway.pinata.cloud/ipfs/${nft.metadata?.properties?.po_cid || nft.uri}`}
                           target="_blank"
                           rel="noreferrer"
                           className="btn btn-secondary btn-sm rounded-sm gap-2"
                         >
-                          <DocumentMagnifyingGlassIcon className="h-4 w-4" /> View PO
+                          <DocumentMagnifyingGlassIcon className="h-4 w-4" /> View Specs
                         </a>
                       </div>
 
