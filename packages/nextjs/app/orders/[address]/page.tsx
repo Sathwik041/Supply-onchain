@@ -293,12 +293,8 @@ const OrderManagement: NextPage = () => {
       });
       formData.append("pinataMetadata", metadata);
 
-      const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      const res = await fetch("/api/pinata/file", {
         method: "POST",
-        headers: {
-          pinata_api_key: process.env.NEXT_PUBLIC_PINATA_API_KEY || "",
-          pinata_secret_api_key: process.env.NEXT_PUBLIC_PINATA_API_SECRET || "",
-        },
         body: formData,
       });
 
@@ -334,12 +330,8 @@ const OrderManagement: NextPage = () => {
       });
       formData.append("pinataMetadata", metadata);
 
-      const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      const res = await fetch("/api/pinata/file", {
         method: "POST",
-        headers: {
-          pinata_api_key: process.env.NEXT_PUBLIC_PINATA_API_KEY || "",
-          pinata_secret_api_key: process.env.NEXT_PUBLIC_PINATA_API_SECRET || "",
-        },
         body: formData,
       });
 
