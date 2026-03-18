@@ -139,12 +139,8 @@ const CreateContract: NextPage = () => {
       const options = JSON.stringify({ cidVersion: 0 });
       formData.append("pinataOptions", options);
 
-      const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      const res = await fetch("/api/pinata/file", {
         method: "POST",
-        headers: {
-          pinata_api_key: process.env.NEXT_PUBLIC_PINATA_API_KEY || "",
-          pinata_secret_api_key: process.env.NEXT_PUBLIC_PINATA_API_SECRET || "",
-        },
         body: formData,
       });
 
@@ -201,12 +197,10 @@ const CreateContract: NextPage = () => {
         },
       };
 
-      const metadataRes = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
+      const metadataRes = await fetch("/api/pinata/json", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          pinata_api_key: process.env.NEXT_PUBLIC_PINATA_API_KEY || "",
-          pinata_secret_api_key: process.env.NEXT_PUBLIC_PINATA_API_SECRET || "",
         },
         body: JSON.stringify({
           pinataContent: metadata,
