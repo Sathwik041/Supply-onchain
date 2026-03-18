@@ -65,6 +65,11 @@ const OrderManagement: NextPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isActionLoading, setIsActionLoading] = useState<boolean>(false);
 
+  // Dispute States
+  const [isDisputeModalOpen, setIsDisputeModalOpen] = useState(false);
+  const [disputeReasonText, setDisputeReasonText] = useState("");
+  const [isDisputing, setIsDisputing] = useState(false);
+
   const [shippingCid, setShippingCid] = useState<string>("");
   const [isUploadingShipping, setIsUploadingShipping] = useState<boolean>(false);
   const [shippingFileName, setShippingFileName] = useState<string>("");
@@ -375,6 +380,35 @@ const OrderManagement: NextPage = () => {
     }
   };
 
+  const handleRaiseDispute = async () => {
+    if (!disputeReasonText.trim()) return toast.error("Please provide a reason for the dispute.");
+    setIsDisputing(true);
+
+    try {
+      const metadataRes = await fetch("/api/pinata/json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pinataContent: { reason: disputeReasonText },
+          pinataMetadata: { name: `Dispute_${contractAddress}_${Date.now()}` },
+        }),
+      });
+
+      const resData = await metadataRes.json();
+      if (!resData.IpfsHash) throw new Error("Failed to pin dispute reason to IPFS");
+
+      await handleAction("raiseDispute", [resData.IpfsHash]);
+
+      setIsDisputeModalOpen(false);
+      setDisputeReasonText("");
+    } catch (error) {
+      console.error("Dispute error:", error);
+      toast.error("Failed to raise dispute.");
+    } finally {
+      setIsDisputing(false);
+    }
+  };
+
   if (loading || !order) {
     return (
       <div className="flex flex-col items-center justify-center grow bg-base-200">
@@ -446,7 +480,7 @@ const OrderManagement: NextPage = () => {
                   <h2 className="text-4xl font-black text-base-content mb-2">{order.item}</h2>
                   <Address address={order.address} />
                 </div>
-                <div className="text-right">
+                <div className="text-right flex flex-col items-end">
                   <div className="text-xs uppercase opacity-50 font-bold mb-1">Status</div>
                   <div
                     className={`badge ${order.status === 7 || isExpired ? "badge-error" : "badge-primary"} p-4 rounded-sm font-bold text-lg uppercase tracking-tighter`}
@@ -465,6 +499,20 @@ const OrderManagement: NextPage = () => {
                           "Cancelled",
                         ][order.status]}
                   </div>
+
+                  {/* DISPUTE ACTION */}
+                  {(isBuyer || isSeller) &&
+                    !isExpired &&
+                    order.status > 0 &&
+                    order.status < 6 &&
+                    order.status !== 7 && (
+                      <button
+                        className="btn btn-error btn-outline btn-xs mt-3 w-full border-error/50 hover:bg-error/20 hover:text-error"
+                        onClick={() => setIsDisputeModalOpen(true)}
+                      >
+                        <ExclamationTriangleIcon className="h-3 w-3" /> Raise Dispute
+                      </button>
+                    )}
                 </div>
               </div>
             </div>
@@ -489,10 +537,12 @@ const OrderManagement: NextPage = () => {
                       {isSeller && !isExpired && (
                         <>
                           <button
-                            className={`btn btn-warning rounded-sm shadow-md px-10 ${isActionLoading ? "loading" : ""}`}
+                            className="btn btn-warning rounded-sm shadow-md px-10"
                             onClick={() => handleAction("acceptContract")}
+                            disabled={isActionLoading}
                           >
-                            Accept Terms & Contract
+                            {isActionLoading && <span className="loading loading-spinner loading-sm"></span>}
+                            {isActionLoading ? "Accepting..." : "Accept Terms & Contract"}
                           </button>
                           <p className="text-[10px] opacity-50 italic mt-1">
                             Note: This offer is time-sensitive and will automatically expire on{" "}
@@ -502,9 +552,11 @@ const OrderManagement: NextPage = () => {
                       )}
                       {isBuyer && (
                         <button
-                          className={`btn btn-error btn-outline rounded-sm ${isActionLoading ? "loading" : ""}`}
+                          className="btn btn-error btn-outline rounded-sm"
                           onClick={() => handleAction("cancelContract")}
+                          disabled={isActionLoading}
                         >
+                          {isActionLoading && <span className="loading loading-spinner loading-sm"></span>}
                           {isExpired ? "Clear from Dashboard" : "Withdraw Order"}
                         </button>
                       )}
@@ -532,10 +584,12 @@ const OrderManagement: NextPage = () => {
                         </div>
 
                         <button
-                          className={`btn btn-primary rounded-sm shadow-lg px-8 ${isActionLoading ? "loading" : ""}`}
+                          className="btn btn-primary rounded-sm shadow-lg px-8"
                           onClick={() => handleAction("depositAndStartProduction", [], parseEther(order.amount))}
+                          disabled={isActionLoading}
                         >
-                          Deposit and Auto Release
+                          {isActionLoading && <span className="loading loading-spinner loading-sm"></span>}
+                          {isActionLoading ? "Depositing..." : "Deposit and Auto Release"}
                         </button>
                       </div>
                     ) : isSeller ? (
@@ -569,9 +623,11 @@ const OrderManagement: NextPage = () => {
                             </p>
                           </div>
                           <button
-                            className={`btn btn-sm btn-outline btn-success rounded-sm ${isActionLoading ? "loading" : ""}`}
+                            className="btn btn-sm btn-outline btn-success rounded-sm"
                             onClick={() => handleAction("finishProduction")}
+                            disabled={isActionLoading}
                           >
+                            {isActionLoading && <span className="loading loading-spinner loading-xs"></span>}
                             Mark Production as Finished
                           </button>
                         </div>
@@ -768,7 +824,7 @@ const OrderManagement: NextPage = () => {
                         </div>
 
                         <button
-                          className={`btn btn-success btn-block rounded-sm shadow-md ${isActionLoading ? "loading" : ""}`}
+                          className="btn btn-success btn-block rounded-sm shadow-md"
                           onClick={() => {
                             const p = (document.getElementById("provider") as HTMLSelectElement).value;
                             const t = (document.getElementById("tracking") as HTMLInputElement).value;
@@ -776,8 +832,10 @@ const OrderManagement: NextPage = () => {
                             if (!shippingCid) return toast.error("Please upload shipping proof first");
                             handleAction("markShipped", [p, t, shippingCid, localProductionLogs]);
                           }}
+                          disabled={isActionLoading}
                         >
-                          Confirm Shipment & Commit Audit Log
+                          {isActionLoading && <span className="loading loading-spinner loading-sm"></span>}
+                          {isActionLoading ? "Committing..." : "Confirm Shipment & Commit Audit Log"}
                         </button>
                       </div>
                     )}
@@ -1178,6 +1236,49 @@ const OrderManagement: NextPage = () => {
           </div>
         </div>
       </div>
+
+      {/* DISPUTE MODAL */}
+      <dialog id="dispute_modal" className={`modal ${isDisputeModalOpen ? "modal-open" : ""}`}>
+        <div className="modal-box rounded-sm border-t-4 border-error">
+          <h3 className="font-bold text-lg flex items-center gap-2 text-error">
+            <ExclamationTriangleIcon className="h-6 w-6" /> Raise a Dispute
+          </h3>
+          <p className="py-4 text-sm opacity-80">
+            Raising a dispute will immediately halt the escrow timeline and freeze all funds. The designated Arbitrator
+            will be notified to review the case.
+          </p>
+          <div className="form-control mb-4">
+            <label className="label">
+              <span className="label-text font-bold uppercase text-[10px] opacity-70">Reason for Dispute</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered h-24 rounded-sm"
+              placeholder="Please explain the issue in detail..."
+              value={disputeReasonText}
+              onChange={e => setDisputeReasonText(e.target.value)}
+              disabled={isDisputing}
+            ></textarea>
+          </div>
+          <div className="modal-action">
+            <button
+              className="btn btn-ghost rounded-sm"
+              onClick={() => setIsDisputeModalOpen(false)}
+              disabled={isDisputing}
+            >
+              Cancel
+            </button>
+            <button className="btn btn-error rounded-sm shadow-md" onClick={handleRaiseDispute} disabled={isDisputing}>
+              {isDisputing && <span className="loading loading-spinner loading-sm"></span>}
+              {isDisputing ? "Submitting..." : "Confirm Dispute"}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setIsDisputeModalOpen(false)} disabled={isDisputing}>
+            close
+          </button>
+        </form>
+      </dialog>
     </div>
   );
 };
