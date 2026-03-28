@@ -100,57 +100,23 @@ export function useDashboardData() {
         const results = await Promise.all(
           allAddresses.map(async addr => {
             try {
+              const contract = { address: addr as `0x${string}`, abi: escrowAbi } as const;
+
+              const multicallResults = await publicClient.multicall({
+                contracts: [
+                  { ...contract, functionName: "buyer", args: [] },
+                  { ...contract, functionName: "seller", args: [] },
+                  { ...contract, functionName: "itemName", args: [] },
+                  { ...contract, functionName: "totalAmount", args: [] },
+                  { ...contract, functionName: "status", args: [] },
+                  { ...contract, functionName: "createdAt", args: [] },
+                  { ...contract, functionName: "deliveredAt", args: [] },
+                  { ...contract, functionName: "quantity", args: [] },
+                ],
+              });
+
               const [buyer, seller, itemName, totalAmount, status, createdAt, deliveredAt, quantity] =
-                await Promise.all([
-                  publicClient.readContract({
-                    address: addr as `0x${string}`,
-                    abi: escrowAbi,
-                    functionName: "buyer",
-                    args: [],
-                  }),
-                  publicClient.readContract({
-                    address: addr as `0x${string}`,
-                    abi: escrowAbi,
-                    functionName: "seller",
-                    args: [],
-                  }),
-                  publicClient.readContract({
-                    address: addr as `0x${string}`,
-                    abi: escrowAbi,
-                    functionName: "itemName",
-                    args: [],
-                  }),
-                  publicClient.readContract({
-                    address: addr as `0x${string}`,
-                    abi: escrowAbi,
-                    functionName: "totalAmount",
-                    args: [],
-                  }),
-                  publicClient.readContract({
-                    address: addr as `0x${string}`,
-                    abi: escrowAbi,
-                    functionName: "status",
-                    args: [],
-                  }),
-                  publicClient.readContract({
-                    address: addr as `0x${string}`,
-                    abi: escrowAbi,
-                    functionName: "createdAt",
-                    args: [],
-                  }),
-                  publicClient.readContract({
-                    address: addr as `0x${string}`,
-                    abi: escrowAbi,
-                    functionName: "deliveredAt",
-                    args: [],
-                  }),
-                  publicClient.readContract({
-                    address: addr as `0x${string}`,
-                    abi: escrowAbi,
-                    functionName: "quantity",
-                    args: [],
-                  }),
-                ]);
+                multicallResults.map(r => r.result);
 
               return {
                 address: addr,

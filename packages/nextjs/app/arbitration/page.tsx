@@ -51,49 +51,25 @@ const ArbitrationDashboard: NextPage = () => {
 
       for (const addr of allEscrows) {
         try {
-          const [arbitrator, isDisputed] = await Promise.all([
-            publicClient.readContract({
-              address: addr as `0x${string}`,
-              abi: SupplyChainEscrowArtifact.abi as Abi,
-              functionName: "arbitrator",
-            }),
-            publicClient.readContract({
-              address: addr as `0x${string}`,
-              abi: SupplyChainEscrowArtifact.abi as Abi,
-              functionName: "disputed",
-            }),
-          ]);
+          const contract = { address: addr as `0x${string}`, abi: SupplyChainEscrowArtifact.abi as Abi } as const;
+
+          // Single multicall to get all needed fields at once
+          const results = await publicClient.multicall({
+            contracts: [
+              { ...contract, functionName: "arbitrator", args: [] },
+              { ...contract, functionName: "disputed", args: [] },
+              { ...contract, functionName: "buyer", args: [] },
+              { ...contract, functionName: "seller", args: [] },
+              { ...contract, functionName: "itemName", args: [] },
+              { ...contract, functionName: "totalAmount", args: [] },
+              { ...contract, functionName: "poCid", args: [] },
+            ],
+          });
+
+          const [arbitrator, isDisputed, buyer, seller, itemName, totalAmount, poCid] = results.map(r => r.result);
 
           // Only show if it's disputed AND the connected user is the arbitrator
           if (isDisputed && (arbitrator as string).toLowerCase() === connectedAddress.toLowerCase()) {
-            const [buyer, seller, itemName, totalAmount, poCid] = await Promise.all([
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: SupplyChainEscrowArtifact.abi as Abi,
-                functionName: "buyer",
-              }),
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: SupplyChainEscrowArtifact.abi as Abi,
-                functionName: "seller",
-              }),
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: SupplyChainEscrowArtifact.abi as Abi,
-                functionName: "itemName",
-              }),
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: SupplyChainEscrowArtifact.abi as Abi,
-                functionName: "totalAmount",
-              }),
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: SupplyChainEscrowArtifact.abi as Abi,
-                functionName: "poCid",
-              }),
-            ]);
-
             disputes.push({
               address: addr,
               buyer: buyer as string,

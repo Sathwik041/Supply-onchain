@@ -51,6 +51,34 @@ const OrderManagement: NextPage = () => {
 
     setLoading(true);
     try {
+      const addr = contractAddress as `0x${string}`;
+      const contract = { address: addr, abi: escrowAbi } as const;
+
+      const results = await publicClient.multicall({
+        contracts: [
+          { ...contract, functionName: "buyer", args: [] },
+          { ...contract, functionName: "seller", args: [] },
+          { ...contract, functionName: "arbitrator", args: [] },
+          { ...contract, functionName: "itemName", args: [] },
+          { ...contract, functionName: "totalAmount", args: [] },
+          { ...contract, functionName: "status", args: [] },
+          { ...contract, functionName: "poCid", args: [] },
+          { ...contract, functionName: "sellerAccepted", args: [] },
+          { ...contract, functionName: "shipped", args: [] },
+          { ...contract, functionName: "shippingProvider", args: [] },
+          { ...contract, functionName: "trackingNumber", args: [] },
+          { ...contract, functionName: "delivered", args: [] },
+          { ...contract, functionName: "deliveredAt", args: [] },
+          { ...contract, functionName: "completed", args: [] },
+          { ...contract, functionName: "disputed", args: [] },
+          { ...contract, functionName: "shippingCid", args: [] },
+          { ...contract, functionName: "getProductionLogs", args: [] },
+          { ...contract, functionName: "createdAt", args: [] },
+          { ...contract, functionName: "disputeReason", args: [] },
+          { ...contract, functionName: "deposited", args: [] },
+        ],
+      });
+
       const [
         buyer,
         seller,
@@ -72,128 +100,7 @@ const OrderManagement: NextPage = () => {
         createdAtFromContract,
         disputeReasonFromContract,
         depositedFromContract,
-      ] = await Promise.all([
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "buyer",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "seller",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "arbitrator",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "itemName",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "totalAmount",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "status",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "poCid",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "sellerAccepted",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "shipped",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "shippingProvider",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "trackingNumber",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "delivered",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "deliveredAt",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "completed",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "disputed",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "shippingCid",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "getProductionLogs",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "createdAt",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "disputeReason",
-          args: [],
-        }),
-        publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: escrowAbi,
-          functionName: "deposited",
-          args: [],
-        }),
-      ]);
+      ] = results.map(r => r.result);
 
       let metadata = null;
       try {

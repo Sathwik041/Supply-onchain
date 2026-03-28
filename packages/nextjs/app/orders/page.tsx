@@ -70,44 +70,20 @@ const ViewOrders: NextPage = () => {
       try {
         const fetchedOrders = await Promise.all(
           allEscrowAddresses.map(async addr => {
-            const [buyer, seller, itemName, totalAmount, status, createdAt] = await Promise.all([
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: escrowAbi,
-                functionName: "buyer",
-                args: [],
-              }),
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: escrowAbi,
-                functionName: "seller",
-                args: [],
-              }),
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: escrowAbi,
-                functionName: "itemName",
-                args: [],
-              }),
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: escrowAbi,
-                functionName: "totalAmount",
-                args: [],
-              }),
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: escrowAbi,
-                functionName: "status",
-                args: [],
-              }),
-              publicClient.readContract({
-                address: addr as `0x${string}`,
-                abi: escrowAbi,
-                functionName: "createdAt",
-                args: [],
-              }),
-            ]);
+            const contract = { address: addr as `0x${string}`, abi: escrowAbi } as const;
+
+            const results = await publicClient.multicall({
+              contracts: [
+                { ...contract, functionName: "buyer", args: [] },
+                { ...contract, functionName: "seller", args: [] },
+                { ...contract, functionName: "itemName", args: [] },
+                { ...contract, functionName: "totalAmount", args: [] },
+                { ...contract, functionName: "status", args: [] },
+                { ...contract, functionName: "createdAt", args: [] },
+              ],
+            });
+
+            const [buyer, seller, itemName, totalAmount, status, createdAt] = results.map(r => r.result);
 
             return {
               address: addr,
