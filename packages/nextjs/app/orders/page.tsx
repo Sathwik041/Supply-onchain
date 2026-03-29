@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Address } from "@scaffold-ui/components";
@@ -8,12 +8,14 @@ import type { NextPage } from "next";
 import { formatEther } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
 import {
+  AdjustmentsHorizontalIcon,
   ArrowPathIcon,
   ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
   CubeIcon,
   MagnifyingGlassIcon,
   ShoppingBagIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import deployedContracts from "~~/contracts/deployedContracts";
 import { useScaffoldReadContract, useTargetNetwork } from "~~/hooks/scaffold-eth";
@@ -27,6 +29,16 @@ interface Order {
   status: number;
   createdAt: bigint;
 }
+
+const STATUS_OPTIONS = [
+  { value: "0", label: "Created" },
+  { value: "1", label: "Accepted" },
+  { value: "2", label: "In Production" },
+  { value: "3", label: "Prod. Complete" },
+  { value: "4", label: "Shipped" },
+  { value: "5", label: "Delivered" },
+  { value: "7", label: "Disputed" },
+];
 
 const ViewOrders: NextPage = () => {
   const { address: connectedAddress } = useAccount();
@@ -43,6 +55,26 @@ const ViewOrders: NextPage = () => {
   const [sortBy, setSortBy] = useState("date-desc");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const moreFiltersRef = useRef<HTMLDivElement>(null);
+
+  // Count active filters (excluding defaults)
+  const activeFilterCount = [
+    statusFilter !== "all",
+    roleFilter !== "all",
+    startDate !== "",
+    endDate !== "",
+    sortBy !== "date-desc",
+  ].filter(Boolean).length;
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setRoleFilter("all");
+    setSortBy("date-desc");
+    setStartDate("");
+    setEndDate("");
+  };
 
   // Fetch escrows where user is buyer
   const { data: buyerEscrows } = useScaffoldReadContract({
@@ -151,7 +183,7 @@ const ViewOrders: NextPage = () => {
           if (Number(order.createdAt) < startTimestamp) return false;
         }
         if (endDate) {
-          const endTimestamp = new Date(endDate).getTime() / 1000 + 86400; // include full end day
+          const endTimestamp = new Date(endDate).getTime() / 1000 + 86400;
           if (Number(order.createdAt) >= endTimestamp) return false;
         }
 
@@ -179,7 +211,8 @@ const ViewOrders: NextPage = () => {
   return (
     <div className="flex flex-col grow bg-base-200 pb-20">
       <div className="max-w-7xl w-full mx-auto px-4 mt-8">
-        <div className="flex justify-between items-center mb-4">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
             <ShoppingBagIcon className="h-8 w-8" />
             My Escrow Orders
@@ -189,97 +222,181 @@ const ViewOrders: NextPage = () => {
           </Link>
         </div>
 
-        {/* Tabs and Controls */}
-        <div className="flex flex-col lg:flex-row gap-4 justify-between items-start mb-8">
-          <div className="tabs tabs-boxed bg-base-100 max-w-[280px] rounded-sm p-1 border border-secondary/20">
-            <button
-              className={`tab font-bold rounded-sm px-4 ${activeTab === "active" ? "tab-active bg-primary text-primary-content" : ""}`}
-              onClick={() => setActiveTab("active")}
-            >
-              Active
-            </button>
-            <button
-              className={`tab font-bold rounded-sm px-4 ${activeTab === "completed" ? "tab-active bg-primary text-primary-content" : ""}`}
-              onClick={() => setActiveTab("completed")}
-            >
-              Completed
-            </button>
-          </div>
+        {/* ── Filter Bar ── */}
+        <div className="bg-base-100 border border-secondary/20 rounded-sm shadow-sm mb-6">
+          {/* Row 1: Tabs · Search · Filters toggle */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 p-3">
+            {/* Tabs */}
+            <div className="flex bg-base-200 rounded-sm p-0.5 shrink-0">
+              <button
+                className={`px-4 py-1.5 text-xs font-bold rounded-sm transition-all ${activeTab === "active" ? "bg-primary text-primary-content shadow-sm" : "hover:bg-base-300"}`}
+                onClick={() => setActiveTab("active")}
+              >
+                Active
+              </button>
+              <button
+                className={`px-4 py-1.5 text-xs font-bold rounded-sm transition-all ${activeTab === "completed" ? "bg-primary text-primary-content shadow-sm" : "hover:bg-base-300"}`}
+                onClick={() => setActiveTab("completed")}
+              >
+                Completed
+              </button>
+            </div>
 
-          <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
+            {/* Divider */}
+            <div className="hidden md:block w-px h-6 bg-base-300" />
+
             {/* Search */}
-            <div className="relative w-full lg:w-auto min-w-[250px]">
-              <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 opacity-50" />
+            <div className="relative flex-1 min-w-0">
+              <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
               <input
                 type="text"
-                placeholder="Search Item or Contract..."
-                className="input input-sm input-bordered w-full pl-9 rounded-sm border-secondary/20 focus:outline-primary"
+                placeholder="Search by item name or contract address…"
+                className="input input-sm w-full pl-9 bg-base-200 border-0 rounded-sm focus:outline-primary placeholder:opacity-40"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              )}
             </div>
 
-            <div className="flex flex-wrap gap-2 w-full lg:w-auto">
-              {/* Date Filters */}
-              <div className="flex items-center gap-1 w-full sm:w-auto">
-                <input
-                  type="date"
-                  className="input input-sm input-bordered rounded-sm border-secondary/20 focus:outline-primary font-bold text-xs"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  title="Start Date"
-                />
-                <span className="opacity-50 text-xs">-</span>
-                <input
-                  type="date"
-                  className="input input-sm input-bordered rounded-sm border-secondary/20 focus:outline-primary font-bold text-xs"
-                  value={endDate}
-                  onChange={e => setEndDate(e.target.value)}
-                  title="End Date"
-                />
+            {/* Role pills */}
+            <div className="flex gap-1 shrink-0">
+              {["all", "buyer", "seller"].map(role => (
+                <button
+                  key={role}
+                  className={`px-3 py-1.5 text-[11px] font-bold uppercase rounded-sm transition-all ${
+                    roleFilter === role
+                      ? "bg-primary text-primary-content shadow-sm"
+                      : "bg-base-200 hover:bg-base-300 opacity-60 hover:opacity-100"
+                  }`}
+                  onClick={() => setRoleFilter(role)}
+                >
+                  {role === "all" ? "All" : role === "buyer" ? "Buyer" : "Seller"}
+                </button>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="hidden md:block w-px h-6 bg-base-300" />
+
+            {/* More Filters toggle */}
+            <button
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase rounded-sm transition-all shrink-0 ${
+                showMoreFilters || activeFilterCount > 0
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "bg-base-200 hover:bg-base-300 opacity-60 hover:opacity-100"
+              }`}
+              onClick={() => setShowMoreFilters(!showMoreFilters)}
+            >
+              <AdjustmentsHorizontalIcon className="h-4 w-4" />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="flex items-center justify-center h-4 w-4 rounded-full bg-primary text-primary-content text-[9px] font-black">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+
+            {/* Clear all */}
+            {activeFilterCount > 0 && (
+              <button
+                className="text-[11px] font-bold text-error/70 hover:text-error uppercase shrink-0 transition-colors"
+                onClick={clearAllFilters}
+              >
+                Clear All
+              </button>
+            )}
+          </div>
+
+          {/* Row 2: Expandable filters panel */}
+          <div
+            ref={moreFiltersRef}
+            className={`overflow-hidden transition-all duration-200 ease-in-out ${showMoreFilters ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 px-3 pb-3 pt-1 border-t border-base-200">
+              {/* Status */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase opacity-40 shrink-0">Status</span>
+                <select
+                  className="select select-xs bg-base-200 border-0 rounded-sm font-bold text-xs focus:outline-primary min-w-[140px]"
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">All Statuses</option>
+                  {STATUS_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Filters */}
-              <select
-                className="select select-sm select-bordered rounded-sm border-secondary/20 focus:outline-primary font-bold min-w-[130px]"
-                value={roleFilter}
-                onChange={e => setRoleFilter(e.target.value)}
-              >
-                <option value="all">All Roles</option>
-                <option value="buyer">As Buyer</option>
-                <option value="seller">As Seller</option>
-              </select>
-
-              <select
-                className="select select-sm select-bordered rounded-sm border-secondary/20 focus:outline-primary font-bold min-w-[140px]"
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Statuses</option>
-                <option value="0">Created</option>
-                <option value="1">Accepted</option>
-                <option value="2">In Production</option>
-                <option value="3">Production Completed</option>
-                <option value="4">Shipped</option>
-                <option value="5">Delivered</option>
-                <option value="7">Disputed</option>
-              </select>
+              <div className="hidden sm:block w-px h-5 bg-base-300" />
 
               {/* Sort */}
-              <select
-                className="select select-sm select-bordered rounded-sm border-secondary/20 focus:outline-primary font-bold min-w-[150px]"
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
-              >
-                <option value="date-desc">Newest First</option>
-                <option value="date-asc">Oldest First</option>
-                <option value="amount-desc">Amount: High-Low</option>
-                <option value="amount-asc">Amount: Low-High</option>
-                <option value="status">Status Order</option>
-              </select>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase opacity-40 shrink-0">Sort</span>
+                <select
+                  className="select select-xs bg-base-200 border-0 rounded-sm font-bold text-xs focus:outline-primary min-w-[140px]"
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value)}
+                >
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="amount-desc">Amount ↓</option>
+                  <option value="amount-asc">Amount ↑</option>
+                  <option value="status">By Status</option>
+                </select>
+              </div>
+
+              <div className="hidden sm:block w-px h-5 bg-base-300" />
+
+              {/* Date Range */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase opacity-40 shrink-0">Date</span>
+                <input
+                  type="date"
+                  className="input input-xs bg-base-200 border-0 rounded-sm font-bold text-xs focus:outline-primary"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                />
+                <span className="text-xs opacity-30">→</span>
+                <input
+                  type="date"
+                  className="input input-xs bg-base-200 border-0 rounded-sm font-bold text-xs focus:outline-primary"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                />
+                {(startDate || endDate) && (
+                  <button
+                    className="opacity-40 hover:opacity-100 transition-opacity"
+                    onClick={() => {
+                      setStartDate("");
+                      setEndDate("");
+                    }}
+                  >
+                    <XMarkIcon className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Results summary */}
+        {!isLoading && orders.length > 0 && (
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs font-bold opacity-40">
+              {filteredOrders.length} of {orders.length} order{orders.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="flex justify-center items-center py-20">

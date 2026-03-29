@@ -7,7 +7,7 @@ import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
 export const metadata = getMetadata({
   title: "Supply-onchain",
-  description: "Built with 🏗 Scaffold-ETH 2",
+  description: "Supply chain escrow system",
 });
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (
