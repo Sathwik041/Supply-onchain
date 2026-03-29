@@ -12,6 +12,7 @@ import {
   ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
   CubeIcon,
+  MagnifyingGlassIcon,
   ShoppingBagIcon,
 } from "@heroicons/react/24/outline";
 import deployedContracts from "~~/contracts/deployedContracts";
@@ -36,6 +37,12 @@ const ViewOrders: NextPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("date-desc");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   // Fetch escrows where user is buyer
   const { data: buyerEscrows } = useScaffoldReadContract({
@@ -125,12 +132,49 @@ const ViewOrders: NextPage = () => {
   const filteredOrders = useMemo(() => {
     return orders
       .filter(order => {
-        // Status 6 (Completed) and 8 (Refunded/Cancelled) go to Completed tab
+        // Tab filtering
         const isCompleted = order.status === 6 || order.status === 8;
-        return activeTab === "completed" ? isCompleted : !isCompleted;
+        if (activeTab === "completed" && !isCompleted) return false;
+        if (activeTab === "active" && isCompleted) return false;
+
+        // Search filtering
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          if (!order.item.toLowerCase().includes(q) && !order.address.toLowerCase().includes(q)) {
+            return false;
+          }
+        }
+
+        // Date Range filtering
+        if (startDate) {
+          const startTimestamp = new Date(startDate).getTime() / 1000;
+          if (Number(order.createdAt) < startTimestamp) return false;
+        }
+        if (endDate) {
+          const endTimestamp = new Date(endDate).getTime() / 1000 + 86400; // include full end day
+          if (Number(order.createdAt) >= endTimestamp) return false;
+        }
+
+        // Status filtering
+        if (statusFilter !== "all" && order.status.toString() !== statusFilter) {
+          return false;
+        }
+
+        // Role filtering
+        if (roleFilter === "buyer" && order.buyer.toLowerCase() !== connectedAddress?.toLowerCase()) return false;
+        if (roleFilter === "seller" && order.seller.toLowerCase() !== connectedAddress?.toLowerCase()) return false;
+
+        return true;
       })
-      .sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
-  }, [orders, activeTab]);
+      .sort((a, b) => {
+        if (sortBy === "date-desc") return Number(b.createdAt) - Number(a.createdAt);
+        if (sortBy === "date-asc") return Number(a.createdAt) - Number(b.createdAt);
+        if (sortBy === "amount-desc") return parseFloat(b.amount) - parseFloat(a.amount);
+        if (sortBy === "amount-asc") return parseFloat(a.amount) - parseFloat(b.amount);
+        if (sortBy === "status") return a.status - b.status;
+        return 0;
+      });
+  }, [orders, activeTab, searchQuery, statusFilter, roleFilter, sortBy, connectedAddress, startDate, endDate]);
 
   return (
     <div className="flex flex-col grow bg-base-200 pb-20">
@@ -145,20 +189,96 @@ const ViewOrders: NextPage = () => {
           </Link>
         </div>
 
-        {/* Tabs */}
-        <div className="tabs tabs-boxed bg-base-100 mb-8 max-w-sm rounded-sm p-1 border border-secondary/20">
-          <button
-            className={`tab flex-1 font-bold rounded-sm ${activeTab === "active" ? "tab-active bg-primary text-primary-content" : ""}`}
-            onClick={() => setActiveTab("active")}
-          >
-            Active Orders
-          </button>
-          <button
-            className={`tab flex-1 font-bold rounded-sm ${activeTab === "completed" ? "tab-active bg-primary text-primary-content" : ""}`}
-            onClick={() => setActiveTab("completed")}
-          >
-            Completed
-          </button>
+        {/* Tabs and Controls */}
+        <div className="flex flex-col lg:flex-row gap-4 justify-between items-start mb-8">
+          <div className="tabs tabs-boxed bg-base-100 max-w-[280px] rounded-sm p-1 border border-secondary/20">
+            <button
+              className={`tab font-bold rounded-sm px-4 ${activeTab === "active" ? "tab-active bg-primary text-primary-content" : ""}`}
+              onClick={() => setActiveTab("active")}
+            >
+              Active
+            </button>
+            <button
+              className={`tab font-bold rounded-sm px-4 ${activeTab === "completed" ? "tab-active bg-primary text-primary-content" : ""}`}
+              onClick={() => setActiveTab("completed")}
+            >
+              Completed
+            </button>
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
+            {/* Search */}
+            <div className="relative w-full lg:w-auto min-w-[250px]">
+              <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 opacity-50" />
+              <input
+                type="text"
+                placeholder="Search Item or Contract..."
+                className="input input-sm input-bordered w-full pl-9 rounded-sm border-secondary/20 focus:outline-primary"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+              {/* Date Filters */}
+              <div className="flex items-center gap-1 w-full sm:w-auto">
+                <input
+                  type="date"
+                  className="input input-sm input-bordered rounded-sm border-secondary/20 focus:outline-primary font-bold text-xs"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                  title="Start Date"
+                />
+                <span className="opacity-50 text-xs">-</span>
+                <input
+                  type="date"
+                  className="input input-sm input-bordered rounded-sm border-secondary/20 focus:outline-primary font-bold text-xs"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                  title="End Date"
+                />
+              </div>
+
+              {/* Filters */}
+              <select
+                className="select select-sm select-bordered rounded-sm border-secondary/20 focus:outline-primary font-bold min-w-[130px]"
+                value={roleFilter}
+                onChange={e => setRoleFilter(e.target.value)}
+              >
+                <option value="all">All Roles</option>
+                <option value="buyer">As Buyer</option>
+                <option value="seller">As Seller</option>
+              </select>
+
+              <select
+                className="select select-sm select-bordered rounded-sm border-secondary/20 focus:outline-primary font-bold min-w-[140px]"
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value)}
+              >
+                <option value="all">All Statuses</option>
+                <option value="0">Created</option>
+                <option value="1">Accepted</option>
+                <option value="2">In Production</option>
+                <option value="3">Production Completed</option>
+                <option value="4">Shipped</option>
+                <option value="5">Delivered</option>
+                <option value="7">Disputed</option>
+              </select>
+
+              {/* Sort */}
+              <select
+                className="select select-sm select-bordered rounded-sm border-secondary/20 focus:outline-primary font-bold min-w-[150px]"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="date-desc">Newest First</option>
+                <option value="date-asc">Oldest First</option>
+                <option value="amount-desc">Amount: High-Low</option>
+                <option value="amount-asc">Amount: Low-High</option>
+                <option value="status">Status Order</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {isLoading ? (
