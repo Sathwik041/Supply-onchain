@@ -30,21 +30,23 @@ export function PaymentBreakdown({ order, milestone1, milestone2, milestone3 }: 
             <div className="flex justify-between items-start">
               <div className="flex flex-col">
                 <span className="text-xs font-bold uppercase opacity-70">Production</span>
-                <span className="text-[10px] opacity-60">Initial (30%)</span>
+                <span className="text-[10px] opacity-60">Initial ({order.milestone1Pct || 30}%)</span>
               </div>
               <span className="font-mono font-bold">{milestone1} MON</span>
             </div>
             <div className="flex justify-between items-start">
               <div className="flex flex-col">
                 <span className="text-xs font-bold uppercase opacity-70">Delivery</span>
-                <span className="text-[10px] opacity-60">Verified (50%)</span>
+                <span className="text-[10px] opacity-60">Verified ({order.milestone2Pct || 50}%)</span>
               </div>
               <span className="font-mono font-bold">{milestone2} MON</span>
             </div>
             <div className="flex justify-between items-start">
               <div className="flex flex-col">
                 <span className="text-xs font-bold uppercase opacity-70">Inspection</span>
-                <span className="text-[10px] opacity-60">Final (20%)</span>
+                <span className="text-[10px] opacity-60">
+                  Final ({100 - (order.milestone1Pct || 30) - (order.milestone2Pct || 50)}%)
+                </span>
               </div>
               <span className="font-mono font-bold">{milestone3} MON</span>
             </div>

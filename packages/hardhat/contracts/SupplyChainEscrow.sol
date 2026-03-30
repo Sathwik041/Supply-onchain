@@ -15,9 +15,13 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
     address public factory;
 
     uint256 public totalAmount; // in wei
-    uint256 public productionAmount; // 30% of totalAmount
-    uint256 public AfterDeliverAmount; //50% of totalAmount
-    uint256 public remainingAmount; // 20% of totalAmount
+    uint256 public productionAmount; // milestone1Pct% of totalAmount
+    uint256 public AfterDeliverAmount; // milestone2Pct% of totalAmount
+    uint256 public remainingAmount; // remaining% of totalAmount
+
+    uint8 public milestone1Pct; // % released on production start (10-50)
+    uint8 public milestone2Pct; // % released on delivery confirm (10-70)
+    // milestone3 = 100 - milestone1Pct - milestone2Pct (derived, always >= 10%)
 
     string public itemName;
     uint256 public quantity;
@@ -104,6 +108,8 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
     }
 
     /// @param _deliveryDurationSeconds Delivery duration in seconds from now
+    /// @param _milestone1Pct Percentage released on production start (10-50)
+    /// @param _milestone2Pct Percentage released on delivery confirmation (10-70)
     function initialize(
         address _buyer,
         address _seller,
@@ -112,13 +118,18 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         string memory _itemName,
         uint256 _quantity,
         uint256 _deliveryDurationSeconds,
-        string memory _poCid
+        string memory _poCid,
+        uint8 _milestone1Pct,
+        uint8 _milestone2Pct
     ) external initializer {
         require(_buyer != address(0), "Invalid buyer");
         require(_seller != address(0), "Invalid seller");
         require(_totalAmount > 0, "Amount must be > 0");
         require(_quantity > 0, "Quantity must be > 0");
         require(_deliveryDurationSeconds > 0, "Invalid duration");
+        require(_milestone1Pct >= 10 && _milestone1Pct <= 50, "M1: 10-50%");
+        require(_milestone2Pct >= 10 && _milestone2Pct <= 70, "M2: 10-70%");
+        require(_milestone1Pct + _milestone2Pct <= 90, "M3 must be >= 10%");
 
         buyer = _buyer;
         seller = _seller;
@@ -128,6 +139,9 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         totalAmount = _totalAmount;
         productionAmount = 0;
         remainingAmount = _totalAmount;
+
+        milestone1Pct = _milestone1Pct;
+        milestone2Pct = _milestone2Pct;
 
         itemName = _itemName;
         quantity = _quantity;
@@ -159,7 +173,7 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         require(status == Status.ACCEPTED, "Must be accepted by seller first");
         require(block.timestamp <= createdAt + 24 hours, "Offer expired");
 
-        uint256 amount = (totalAmount * 30) / 100;
+        uint256 amount = (totalAmount * milestone1Pct) / 100;
         productionAmount = amount;
         remainingAmount = totalAmount - amount;
         deposited = true;
@@ -255,7 +269,7 @@ contract SupplyChainEscrow is ReentrancyGuard, Initializable {
         require(shipped, "Not shipped");
         require(!delivered, "Already Delivered");
 
-        uint256 amount = (totalAmount * 50) / 100;
+        uint256 amount = (totalAmount * milestone2Pct) / 100;
         AfterDeliverAmount = amount;
         remainingAmount = remainingAmount - amount;
         delivered = true;

@@ -37,7 +37,9 @@ contract EscrowFactory {
         string memory _itemName,
         uint256 _quantity,
         uint256 _deliveryDurationSeconds,
-        string memory _poCid
+        string memory _poCid,
+        uint8 _milestone1Pct,
+        uint8 _milestone2Pct
     ) external returns (address) {
         address escrowAddress = Clones.clone(implementation);
         SupplyChainEscrow(payable(escrowAddress)).initialize(
@@ -48,7 +50,9 @@ contract EscrowFactory {
             _itemName,
             _quantity,
             _deliveryDurationSeconds,
-            _poCid
+            _poCid,
+            _milestone1Pct,
+            _milestone2Pct
         );
 
         allEscrows.push(escrowAddress);

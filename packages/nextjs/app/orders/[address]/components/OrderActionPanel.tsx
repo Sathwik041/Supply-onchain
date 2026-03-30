@@ -139,8 +139,8 @@ export function OrderActionPanel({
               <div className="bg-primary/20 p-4 rounded-sm border border-primary/30 mb-6">
                 <p className="text-sm font-bold text-primary mb-0 flex items-center gap-2">
                   <ShieldCheckIcon className="h-5 w-5" />
-                  Depositing Total {order.amount} MON and Auto Release {milestone1} MON (30%) for seller to start
-                  production.
+                  Depositing Total {order.amount} MON and Auto Release {milestone1} MON ({order.milestone1Pct || 30}%)
+                  for seller to start production.
                 </p>
               </div>
 
@@ -160,7 +160,8 @@ export function OrderActionPanel({
               </h3>
               <p className="text-sm mb-1">Contract terms accepted. Waiting for the buyer to fund the escrow.</p>
               <p className="text-xs opacity-50 italic">
-                Production should commence immediately after the initial 30% ({milestone1} MON) is released.
+                Production should commence immediately after the initial {order.milestone1Pct || 30}% ({milestone1} MON)
+                is released.
               </p>
             </div>
           ) : null}
@@ -246,8 +247,8 @@ export function OrderActionPanel({
               <CheckCircleIcon className="h-12 w-12 text-primary mx-auto mb-2" />
               <h3 className="font-bold text-xl mb-2">Confirm Delivery & Release Phase 2</h3>
               <p className="text-sm opacity-80 mb-6 max-w-sm mx-auto">
-                Once the machinery arrives and is physically secured, confirm delivery here to release the next 50% (
-                {milestone2} MON) to the manufacturer.
+                Once the machinery arrives and is physically secured, confirm delivery here to release the next{" "}
+                {order.milestone2Pct || 50}% ({milestone2} MON) to the manufacturer.
               </p>
               <button
                 className="btn btn-primary btn-wide rounded-sm shadow-xl"
@@ -284,7 +285,9 @@ export function OrderActionPanel({
               <>
                 <p className="text-sm opacity-80 mb-6 max-w-sm mx-auto">
                   You have 14 days to complete final installation and quality checks. Once everything is verified,
-                  complete the contract to release the final 20% ({milestone3} MON) and receive your Machine Passport.
+                  complete the contract to release the final{" "}
+                  {100 - (order.milestone1Pct || 30) - (order.milestone2Pct || 50)}% ({milestone3} MON) and receive your
+                  Machine Passport.
                 </p>
                 <div className="flex flex-col sm:flex-row justify-center gap-4">
                   <button
@@ -345,15 +348,17 @@ export function OrderActionPanel({
             <div className="grid grid-cols-3 gap-2 w-full max-w-lg mb-8">
               <div className="bg-base-100 p-3 rounded-sm border border-success/20">
                 <p className="text-[10px] uppercase opacity-50 font-bold">Production</p>
-                <p className="font-bold text-xs">30% ✅</p>
+                <p className="font-bold text-xs">{order.milestone1Pct || 30}% ✅</p>
               </div>
               <div className="bg-base-100 p-3 rounded-sm border border-success/20">
                 <p className="text-[10px] uppercase opacity-50 font-bold">Delivery</p>
-                <p className="font-bold text-xs">50% ✅</p>
+                <p className="font-bold text-xs">{order.milestone2Pct || 50}% ✅</p>
               </div>
               <div className="bg-base-100 p-3 rounded-sm border border-success/20">
                 <p className="text-[10px] uppercase opacity-50 font-bold">Final</p>
-                <p className="font-bold text-xs">20% ✅</p>
+                <p className="font-bold text-xs">
+                  {100 - (order.milestone1Pct || 30) - (order.milestone2Pct || 50)}% ✅
+                </p>
               </div>
             </div>
 

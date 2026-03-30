@@ -119,9 +119,13 @@ const CreateContract: NextPage = () => {
     reader.readAsDataURL(file);
   };
 
-  const milestone1 = totalAmount ? (parseFloat(totalAmount) * 0.3).toFixed(4) : "0.00";
-  const milestone2 = totalAmount ? (parseFloat(totalAmount) * 0.5).toFixed(4) : "0.00";
-  const milestone3 = totalAmount ? (parseFloat(totalAmount) * 0.2).toFixed(4) : "0.00";
+  const [milestone1Pct, setMilestone1Pct] = useState<number>(30);
+  const [milestone2Pct, setMilestone2Pct] = useState<number>(50);
+  const milestone3Pct = 100 - milestone1Pct - milestone2Pct;
+
+  const milestone1 = totalAmount ? ((parseFloat(totalAmount) * milestone1Pct) / 100).toFixed(4) : "0.00";
+  const milestone2 = totalAmount ? ((parseFloat(totalAmount) * milestone2Pct) / 100).toFixed(4) : "0.00";
+  const milestone3 = totalAmount ? ((parseFloat(totalAmount) * milestone3Pct) / 100).toFixed(4) : "0.00";
 
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -224,6 +228,8 @@ const CreateContract: NextPage = () => {
           BigInt(quantity),
           BigInt(parseInt(deliveryDays) * 86400),
           finalPoCid,
+          milestone1Pct,
+          milestone2Pct,
         ],
       });
 
@@ -493,6 +499,121 @@ const CreateContract: NextPage = () => {
                 </div>
               </div>
 
+              <div className="mt-8 pt-8 border-t border-secondary/20 space-y-6">
+                <h3 className="font-bold text-lg opacity-70 uppercase tracking-tight flex items-center gap-2 mb-4">
+                  <CurrencyDollarIcon className="h-5 w-5" />
+                  Payment Schedule
+                </h3>
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <button
+                    className={`btn btn-sm ${milestone1Pct === 30 && milestone2Pct === 50 ? "btn-primary" : "btn-outline border-base-300"}`}
+                    onClick={() => {
+                      setMilestone1Pct(30);
+                      setMilestone2Pct(50);
+                    }}
+                  >
+                    🏭 Standard 30/50/20
+                  </button>
+                  <button
+                    className={`btn btn-sm ${milestone1Pct === 10 && milestone2Pct === 70 ? "btn-primary" : "btn-outline border-base-300"}`}
+                    onClick={() => {
+                      setMilestone1Pct(10);
+                      setMilestone2Pct(70);
+                    }}
+                  >
+                    🛡️ Low-Risk 10/70/20
+                  </button>
+                  <button
+                    className={`btn btn-sm ${milestone1Pct === 40 && milestone2Pct === 40 ? "btn-primary" : "btn-outline border-base-300"}`}
+                    onClick={() => {
+                      setMilestone1Pct(40);
+                      setMilestone2Pct(40);
+                    }}
+                  >
+                    ⚙️ High-Upfront 40/40/20
+                  </button>
+                  <button
+                    className={`btn btn-sm ${milestone1Pct === 20 && milestone2Pct === 20 ? "btn-primary" : "btn-outline border-base-300"}`}
+                    onClick={() => {
+                      setMilestone1Pct(20);
+                      setMilestone2Pct(20);
+                    }}
+                  >
+                    🔧 Capital Equipment 20/20/60
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div className="form-control w-full">
+                      <label className="label">
+                        <span className="label-text font-semibold">M1: Production ({milestone1Pct}%)</span>
+                      </label>
+                      <input
+                        type="range"
+                        min="10"
+                        max="50"
+                        value={milestone1Pct}
+                        onChange={e => {
+                          const val = Math.min(50, Math.max(10, parseInt(e.target.value)));
+                          setMilestone1Pct(val);
+                          if (val + milestone2Pct > 90) setMilestone2Pct(90 - val);
+                        }}
+                        className="range range-primary"
+                        step="5"
+                      />
+                    </div>
+                    <div className="form-control w-full">
+                      <label className="label">
+                        <span className="label-text font-semibold">M2: Delivery ({milestone2Pct}%)</span>
+                      </label>
+                      <input
+                        type="range"
+                        min="10"
+                        max={90 - milestone1Pct}
+                        value={milestone2Pct}
+                        onChange={e => {
+                          const val = Math.max(10, Math.min(90 - milestone1Pct, parseInt(e.target.value)));
+                          setMilestone2Pct(val);
+                        }}
+                        className="range range-info"
+                        step="5"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-base-200 p-4 rounded-sm flex flex-col justify-center">
+                    <span className="label-text font-semibold mb-2">Visual Split Preview</span>
+                    <div className="w-full h-8 flex rounded-sm overflow-hidden mb-2">
+                      <div
+                        className="bg-primary flex items-center justify-center text-[10px] font-bold text-primary-content transition-all duration-300"
+                        style={{ width: `${milestone1Pct}%` }}
+                      >
+                        {milestone1Pct}%
+                      </div>
+                      <div
+                        className="bg-info flex items-center justify-center text-[10px] font-bold text-info-content transition-all duration-300 border-l border-base-100/20"
+                        style={{ width: `${milestone2Pct}%` }}
+                      >
+                        {milestone2Pct}%
+                      </div>
+                      <div
+                        className="bg-success flex items-center justify-center text-[10px] font-bold text-success-content transition-all duration-300 border-l border-base-100/20"
+                        style={{ width: `${milestone3Pct}%` }}
+                      >
+                        {milestone3Pct}%
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-[10px] opacity-60 font-medium px-1">
+                      <span>M1 Production</span>
+                      <span>M2 Delivery</span>
+                      <span>M3 Inspection</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="card-actions justify-end gap-4 mt-12 border-t pt-8">
                 <Link href="/dashboard" className="btn btn-ghost btn-lg rounded-sm">
                   Discard Draft
@@ -528,21 +649,21 @@ const CreateContract: NextPage = () => {
                       <div className="flex justify-between items-start">
                         <div className="flex flex-col">
                           <span className="text-xs font-bold uppercase opacity-70">Production</span>
-                          <span className="text-[10px] opacity-60">Initial (30%)</span>
+                          <span className="text-[10px] opacity-60">Initial ({milestone1Pct}%)</span>
                         </div>
                         <span className="font-mono font-bold">{milestone1} MON</span>
                       </div>
                       <div className="flex justify-between items-start">
                         <div className="flex flex-col">
                           <span className="text-xs font-bold uppercase opacity-70">Delivery</span>
-                          <span className="text-[10px] opacity-60">Verified (50%)</span>
+                          <span className="text-[10px] opacity-60">Verified ({milestone2Pct}%)</span>
                         </div>
                         <span className="font-mono font-bold">{milestone2} MON</span>
                       </div>
                       <div className="flex justify-between items-start">
                         <div className="flex flex-col">
                           <span className="text-xs font-bold uppercase opacity-70">Inspection</span>
-                          <span className="text-[10px] opacity-60">Final (20%)</span>
+                          <span className="text-[10px] opacity-60">Final ({milestone3Pct}%)</span>
                         </div>
                         <span className="font-mono font-bold">{milestone3} MON</span>
                       </div>

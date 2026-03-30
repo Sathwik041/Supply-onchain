@@ -20,5 +20,7 @@ export interface Order {
   productionLogs: string[];
   createdAt: bigint;
   deposited?: boolean;
+  milestone1Pct?: number;
+  milestone2Pct?: number;
   metadata?: any;
 }

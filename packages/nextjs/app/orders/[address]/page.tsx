@@ -76,6 +76,8 @@ const OrderManagement: NextPage = () => {
           { ...contract, functionName: "createdAt", args: [] },
           { ...contract, functionName: "disputeReason", args: [] },
           { ...contract, functionName: "deposited", args: [] },
+          { ...contract, functionName: "milestone1Pct", args: [] },
+          { ...contract, functionName: "milestone2Pct", args: [] },
         ],
       });
 
@@ -100,6 +102,8 @@ const OrderManagement: NextPage = () => {
         createdAtFromContract,
         disputeReasonFromContract,
         depositedFromContract,
+        milestone1PctFromContract,
+        milestone2PctFromContract,
       ] = results.map(r => r.result);
 
       let metadata = null;
@@ -137,6 +141,8 @@ const OrderManagement: NextPage = () => {
         createdAt: createdAtFromContract as bigint,
         disputeReason: disputeReasonFromContract as string,
         deposited: depositedFromContract as boolean,
+        milestone1Pct: milestone1PctFromContract ? Number(milestone1PctFromContract) : undefined,
+        milestone2Pct: milestone2PctFromContract ? Number(milestone2PctFromContract) : undefined,
         metadata: metadata,
       });
     } catch (error) {
@@ -324,9 +330,12 @@ const OrderManagement: NextPage = () => {
                       ? EscrowStatus.CANCELLED
                       : EscrowStatus.CREATED;
 
-  const milestone1 = (parseFloat(order.amount) * 0.3).toFixed(4);
-  const milestone2 = (parseFloat(order.amount) * 0.5).toFixed(4);
-  const milestone3 = (parseFloat(order.amount) * 0.2).toFixed(4);
+  const m1Pct = order.milestone1Pct || 30;
+  const m2Pct = order.milestone2Pct || 50;
+  const m3Pct = 100 - m1Pct - m2Pct;
+  const milestone1 = ((parseFloat(order.amount) * m1Pct) / 100).toFixed(4);
+  const milestone2 = ((parseFloat(order.amount) * m2Pct) / 100).toFixed(4);
+  const milestone3 = ((parseFloat(order.amount) * m3Pct) / 100).toFixed(4);
 
   const getTrackingUrl = (provider: string, tracking: string) => {
     const p = provider.toLowerCase();
@@ -410,7 +419,7 @@ const OrderManagement: NextPage = () => {
                         : order.status >= 5
                           ? milestone3
                           : order.status >= 2
-                            ? (parseFloat(order.amount) * 0.7).toFixed(4)
+                            ? ((parseFloat(order.amount) * (100 - m1Pct)) / 100).toFixed(4)
                             : order.amount}{" "}
                       MON
                     </div>
