@@ -11,7 +11,7 @@ const Home: NextPage = () => {
           <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
             SUPPLY-ONCHAIN{" "}
             <span className="text-primary text-2xl md:text-4xl lg:text-5xl block mt-2 whitespace-nowrap">
-              The Gold Standard for Industrial Items Trade
+              Securing the Global Industrial Supply Chain
             </span>
           </h1>
 
@@ -20,10 +20,13 @@ const Home: NextPage = () => {
               A robust, smart-contract-driven protocol designed to eliminate counterparty risk in global manufacturing
               and logistics for industrial assets.
             </p>
-            <p className="font-semibold text-primary/90">
-              Flexible Payment Milestones &bull; Verified Logistics Tracking &bull; Immutable Machine Passport (Digital
-              Twin)
-            </p>
+            <div className="font-semibold text-primary/90 text-lg md:text-xl flex flex-wrap justify-center items-center gap-x-3 gap-y-1">
+              <span className="whitespace-nowrap">Flexible Payment Milestones</span>
+              <span className="hidden lg:inline">&bull;</span>
+              <span className="whitespace-nowrap">Verified Logistics Tracking</span>
+              <span className="hidden lg:inline">&bull;</span>
+              <span className="whitespace-nowrap">Machine Passport (Digital Twin)</span>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
