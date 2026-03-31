@@ -25,17 +25,23 @@ interface LogisticsTimelineProps {
   currentStatus: EscrowStatus;
   isPaused?: boolean;
   isDraft?: boolean;
+  m1Pct?: number;
+  m2Pct?: number;
 }
 
-const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, isPaused, isDraft }) => {
+const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, isPaused, isDraft, m1Pct, m2Pct }) => {
+  const milestone1 = m1Pct || 30;
+  const milestone2 = m2Pct || 50;
+  const milestone3 = 100 - milestone1 - milestone2;
+
   const steps = [
     { name: "Contract", status: EscrowStatus.ACCEPTED, icon: DocumentCheckIcon, description: "Accepted" },
     {
       name: "Funding",
       status: EscrowStatus.PRODUCTION,
       icon: CurrencyDollarIcon,
-      description: "30% Released",
-      percentage: "30%",
+      description: `${milestone1}% Released`,
+      percentage: `${milestone1}%`,
     },
     { name: "Production", status: EscrowStatus.PRODUCTION_COMPLETED, icon: CubeIcon, description: "Manufacturing" },
     { name: "Shipped", status: EscrowStatus.SHIPPED, icon: TruckIcon, description: "In transit" },
@@ -43,15 +49,15 @@ const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, is
       name: "Delivered",
       status: EscrowStatus.DELIVERED,
       icon: CheckCircleIcon,
-      description: "50% Released",
-      percentage: "50%",
+      description: `${milestone2}% Released`,
+      percentage: `${milestone2}%`,
     },
     {
       name: "Completed",
       status: EscrowStatus.COMPLETED,
       icon: CheckCircleIcon,
-      description: "20% Released",
-      percentage: "20%",
+      description: `${milestone3}% Released`,
+      percentage: `${milestone3}%`,
     },
   ];
 

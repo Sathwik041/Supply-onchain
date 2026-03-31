@@ -270,7 +270,7 @@ const CreateContract: NextPage = () => {
     <div className="flex flex-col grow bg-base-200 pb-20 relative">
       <div className="max-w-7xl w-full mx-auto px-4 mt-1">
         <div className="mb-6">
-          <LogisticsTimeline currentStatus={status} isDraft={true} />
+          <LogisticsTimeline currentStatus={status} isDraft={true} m1Pct={milestone1Pct} m2Pct={milestone2Pct} />
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-700">

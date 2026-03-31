@@ -357,7 +357,7 @@ const OrderManagement: NextPage = () => {
     <div className="flex flex-col grow bg-base-200 pb-10">
       <div className="max-w-7xl w-full mx-auto px-4 mt-2">
         <div className="mb-2">
-          <LogisticsTimeline currentStatus={timelineStatus} isPaused={order.disputed} />
+          <LogisticsTimeline currentStatus={timelineStatus} isPaused={order.disputed} m1Pct={m1Pct} m2Pct={m2Pct} />
         </div>
 
         <div className="card bg-base-100 shadow-xl border border-secondary/20 rounded-sm overflow-hidden">
