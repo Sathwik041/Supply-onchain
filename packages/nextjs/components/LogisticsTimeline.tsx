@@ -80,7 +80,7 @@ const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, is
   };
 
   return (
-    <div className="w-full py-2 px-4 bg-base-100 rounded-sm shadow-md border border-secondary/10 relative">
+    <div className="w-full py-1 px-4 bg-base-100 rounded-sm shadow-md border border-secondary/10 relative">
       {isPaused && (
         <div className="absolute top-2 right-2 flex items-center gap-2 px-3 py-1 bg-warning/20 text-warning rounded-full border border-warning/30 z-20">
           <div className="w-2 h-2 bg-warning rounded-full animate-ping"></div>

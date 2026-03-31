@@ -273,6 +273,51 @@ const CreateContract: NextPage = () => {
           <LogisticsTimeline currentStatus={status} isDraft={true} m1Pct={milestone1Pct} m2Pct={milestone2Pct} />
         </div>
 
+        <div className="mb-6 card bg-base-100 shadow-lg border border-secondary/20 p-6 rounded-sm animate-in fade-in duration-700 delay-100">
+          <h4 className="text-sm font-bold uppercase opacity-50 mb-4 pb-2 border-b flex items-center gap-2">
+            <CurrencyDollarIcon className="h-5 w-5" />
+            Payment Milestones (Preset Schedules)
+          </h4>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <button
+              className={`btn ${milestone1Pct === 30 && milestone2Pct === 50 ? "btn-primary" : "btn-outline border-base-300"}`}
+              onClick={() => {
+                setMilestone1Pct(30);
+                setMilestone2Pct(50);
+              }}
+            >
+              🏭 Standard (30/50/20)
+            </button>
+            <button
+              className={`btn ${milestone1Pct === 10 && milestone2Pct === 70 ? "btn-primary" : "btn-outline border-base-300"}`}
+              onClick={() => {
+                setMilestone1Pct(10);
+                setMilestone2Pct(70);
+              }}
+            >
+              🛡️ Low-Risk (10/70/20)
+            </button>
+            <button
+              className={`btn ${milestone1Pct === 40 && milestone2Pct === 40 ? "btn-primary" : "btn-outline border-base-300"}`}
+              onClick={() => {
+                setMilestone1Pct(40);
+                setMilestone2Pct(40);
+              }}
+            >
+              ⚙️ High-Upfront (40/40/20)
+            </button>
+            <button
+              className={`btn ${milestone1Pct === 20 && milestone2Pct === 20 ? "btn-primary" : "btn-outline border-base-300"}`}
+              onClick={() => {
+                setMilestone1Pct(20);
+                setMilestone2Pct(20);
+              }}
+            >
+              🔧 Equipment (20/20/60)
+            </button>
+          </div>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-700">
           <div className="card bg-base-100 shadow-xl border border-secondary/20 flex-1 rounded-sm overflow-hidden">
             <div className="card-body p-8 md:p-12">
@@ -517,51 +562,6 @@ const CreateContract: NextPage = () => {
 
           <div className="lg:w-80">
             <div className="sticky top-8 space-y-6">
-              <div className="card bg-base-100 shadow-lg border border-secondary/20 p-4 rounded-sm">
-                <h4 className="text-xs font-bold uppercase opacity-50 mb-3 border-b pb-2 flex items-center gap-2">
-                  <CurrencyDollarIcon className="h-4 w-4" />
-                  Payment Milestones
-                </h4>
-                <div className="flex flex-col gap-2">
-                  <button
-                    className={`btn btn-sm ${milestone1Pct === 30 && milestone2Pct === 50 ? "btn-primary" : "btn-outline border-base-300"}`}
-                    onClick={() => {
-                      setMilestone1Pct(30);
-                      setMilestone2Pct(50);
-                    }}
-                  >
-                    🏭 Standard 30/50/20
-                  </button>
-                  <button
-                    className={`btn btn-sm ${milestone1Pct === 10 && milestone2Pct === 70 ? "btn-primary" : "btn-outline border-base-300"}`}
-                    onClick={() => {
-                      setMilestone1Pct(10);
-                      setMilestone2Pct(70);
-                    }}
-                  >
-                    🛡️ Low-Risk 10/70/20
-                  </button>
-                  <button
-                    className={`btn btn-sm ${milestone1Pct === 40 && milestone2Pct === 40 ? "btn-primary" : "btn-outline border-base-300"}`}
-                    onClick={() => {
-                      setMilestone1Pct(40);
-                      setMilestone2Pct(40);
-                    }}
-                  >
-                    ⚙️ High-Upfront 40/40/20
-                  </button>
-                  <button
-                    className={`btn btn-sm ${milestone1Pct === 20 && milestone2Pct === 20 ? "btn-primary" : "btn-outline border-base-300"}`}
-                    onClick={() => {
-                      setMilestone1Pct(20);
-                      setMilestone2Pct(20);
-                    }}
-                  >
-                    🔧 Capital Equipment 20/20/60
-                  </button>
-                </div>
-              </div>
-
               <div className="mt-6 card bg-primary text-primary-content shadow-2xl overflow-hidden rounded-sm">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <CurrencyDollarIcon className="h-24 w-24" />
