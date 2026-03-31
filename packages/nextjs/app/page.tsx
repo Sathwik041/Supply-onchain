@@ -21,7 +21,8 @@ const Home: NextPage = () => {
               and logistics for industrial assets.
             </p>
             <p className="font-semibold text-primary/90">
-              30% Initial Production &bull; 50% Verified Delivery &bull; 20% Final Inspection
+              Flexible Payment Milestones &bull; Verified Logistics Tracking &bull; Immutable Machine Passport (Digital
+              Twin)
             </p>
           </div>
 

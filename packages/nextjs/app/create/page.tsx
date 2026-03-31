@@ -499,13 +499,30 @@ const CreateContract: NextPage = () => {
                 </div>
               </div>
 
-              <div className="mt-8 pt-8 border-t border-secondary/20 space-y-6">
-                <h3 className="font-bold text-lg opacity-70 uppercase tracking-tight flex items-center gap-2 mb-4">
-                  <CurrencyDollarIcon className="h-5 w-5" />
-                  Payment Schedule
-                </h3>
+              <div className="card-actions justify-end gap-4 mt-12 border-t pt-8">
+                <Link href="/dashboard" className="btn btn-ghost btn-lg rounded-sm">
+                  Discard Draft
+                </Link>
+                <button
+                  className={`btn btn-primary btn-lg px-12 shadow-lg flex gap-2 rounded-sm ${isDeploying ? "loading" : ""}`}
+                  onClick={handleDeploy}
+                  disabled={isDeploying}
+                >
+                  {!isDeploying && <RocketLaunchIcon className="h-6 w-6" />}
+                  {isDeploying ? "Creating..." : "Create Escrow Contract"}
+                </button>
+              </div>
+            </div>
+          </div>
 
-                <div className="flex flex-wrap gap-2 mb-6">
+          <div className="lg:w-80">
+            <div className="sticky top-8 space-y-6">
+              <div className="card bg-base-100 shadow-lg border border-secondary/20 p-4 rounded-sm">
+                <h4 className="text-xs font-bold uppercase opacity-50 mb-3 border-b pb-2 flex items-center gap-2">
+                  <CurrencyDollarIcon className="h-4 w-4" />
+                  Payment Milestones
+                </h4>
+                <div className="flex flex-col gap-2">
                   <button
                     className={`btn btn-sm ${milestone1Pct === 30 && milestone2Pct === 50 ? "btn-primary" : "btn-outline border-base-300"}`}
                     onClick={() => {
@@ -543,96 +560,9 @@ const CreateContract: NextPage = () => {
                     🔧 Capital Equipment 20/20/60
                   </button>
                 </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                    <div className="form-control w-full">
-                      <label className="label">
-                        <span className="label-text font-semibold">M1: Production ({milestone1Pct}%)</span>
-                      </label>
-                      <input
-                        type="range"
-                        min="10"
-                        max="50"
-                        value={milestone1Pct}
-                        onChange={e => {
-                          const val = Math.min(50, Math.max(10, parseInt(e.target.value)));
-                          setMilestone1Pct(val);
-                          if (val + milestone2Pct > 90) setMilestone2Pct(90 - val);
-                        }}
-                        className="range range-primary"
-                        step="5"
-                      />
-                    </div>
-                    <div className="form-control w-full">
-                      <label className="label">
-                        <span className="label-text font-semibold">M2: Delivery ({milestone2Pct}%)</span>
-                      </label>
-                      <input
-                        type="range"
-                        min="10"
-                        max={90 - milestone1Pct}
-                        value={milestone2Pct}
-                        onChange={e => {
-                          const val = Math.max(10, Math.min(90 - milestone1Pct, parseInt(e.target.value)));
-                          setMilestone2Pct(val);
-                        }}
-                        className="range range-info"
-                        step="5"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-base-200 p-4 rounded-sm flex flex-col justify-center">
-                    <span className="label-text font-semibold mb-2">Visual Split Preview</span>
-                    <div className="w-full h-8 flex rounded-sm overflow-hidden mb-2">
-                      <div
-                        className="bg-primary flex items-center justify-center text-[10px] font-bold text-primary-content transition-all duration-300"
-                        style={{ width: `${milestone1Pct}%` }}
-                      >
-                        {milestone1Pct}%
-                      </div>
-                      <div
-                        className="bg-info flex items-center justify-center text-[10px] font-bold text-info-content transition-all duration-300 border-l border-base-100/20"
-                        style={{ width: `${milestone2Pct}%` }}
-                      >
-                        {milestone2Pct}%
-                      </div>
-                      <div
-                        className="bg-success flex items-center justify-center text-[10px] font-bold text-success-content transition-all duration-300 border-l border-base-100/20"
-                        style={{ width: `${milestone3Pct}%` }}
-                      >
-                        {milestone3Pct}%
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-[10px] opacity-60 font-medium px-1">
-                      <span>M1 Production</span>
-                      <span>M2 Delivery</span>
-                      <span>M3 Inspection</span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              <div className="card-actions justify-end gap-4 mt-12 border-t pt-8">
-                <Link href="/dashboard" className="btn btn-ghost btn-lg rounded-sm">
-                  Discard Draft
-                </Link>
-                <button
-                  className={`btn btn-primary btn-lg px-12 shadow-lg flex gap-2 rounded-sm ${isDeploying ? "loading" : ""}`}
-                  onClick={handleDeploy}
-                  disabled={isDeploying}
-                >
-                  {!isDeploying && <RocketLaunchIcon className="h-6 w-6" />}
-                  {isDeploying ? "Creating..." : "Create Escrow Contract"}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:w-80">
-            <div className="sticky top-8 space-y-6">
-              <div className="card bg-primary text-primary-content shadow-2xl overflow-hidden rounded-sm">
+              <div className="mt-6 card bg-primary text-primary-content shadow-2xl overflow-hidden rounded-sm">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <CurrencyDollarIcon className="h-24 w-24" />
                 </div>

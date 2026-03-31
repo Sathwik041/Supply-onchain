@@ -74,7 +74,7 @@ const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, is
   };
 
   return (
-    <div className="w-full py-4 px-4 bg-base-100 rounded-sm shadow-md border border-secondary/10 relative">
+    <div className="w-full py-2 px-4 bg-base-100 rounded-sm shadow-md border border-secondary/10 relative">
       {isPaused && (
         <div className="absolute top-2 right-2 flex items-center gap-2 px-3 py-1 bg-warning/20 text-warning rounded-full border border-warning/30 z-20">
           <div className="w-2 h-2 bg-warning rounded-full animate-ping"></div>
@@ -82,7 +82,7 @@ const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, is
         </div>
       )}
       <div className="flex justify-between items-center mb-6 px-2">
-        <h2 className="text-lg font-bold flex items-center gap-2">
+        <h2 className="text-lg font-bold flex items-center gap-2 mt-4">
           <TruckIcon className="h-5 w-5 text-success" />
           Logistics Status
         </h2>
