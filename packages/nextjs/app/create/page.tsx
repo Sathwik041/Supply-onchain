@@ -562,7 +562,7 @@ const CreateContract: NextPage = () => {
 
           <div className="lg:w-80">
             <div className="sticky top-8 space-y-6">
-              <div className="mt-6 card bg-primary text-primary-content shadow-2xl overflow-hidden rounded-sm">
+              <div className="card bg-primary text-primary-content shadow-2xl overflow-hidden rounded-sm">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <CurrencyDollarIcon className="h-24 w-24" />
                 </div>
