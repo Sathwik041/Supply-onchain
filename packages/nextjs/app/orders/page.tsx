@@ -210,14 +210,14 @@ const ViewOrders: NextPage = () => {
 
   return (
     <div className="flex flex-col grow bg-base-200 pb-20">
-      <div className="max-w-7xl w-full mx-auto px-4 mt-8">
+      <div className="max-w-7xl w-full mx-auto px-2 sm:px-4 mt-4 sm:mt-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
-            <ShoppingBagIcon className="h-8 w-8" />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+          <h1 className="text-xl sm:text-3xl font-bold text-primary flex items-center gap-3">
+            <ShoppingBagIcon className="h-6 w-6 sm:h-8 sm:w-8" />
             My Escrow Orders
           </h1>
-          <Link href="/create" className="btn btn-primary rounded-sm shadow-md">
+          <Link href="/create" className="btn btn-primary btn-sm sm:btn-md rounded-sm shadow-md">
             New Contract
           </Link>
         </div>
@@ -225,7 +225,7 @@ const ViewOrders: NextPage = () => {
         {/* ── Filter Bar ── */}
         <div className="bg-base-100 border border-secondary/20 rounded-sm shadow-sm mb-6">
           {/* Row 1: Tabs · Search · Filters toggle */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 p-3">
+          <div className="flex flex-col gap-3 p-2 sm:p-3">
             {/* Tabs */}
             <div className="flex bg-base-200 rounded-sm p-0.5 shrink-0">
               <button
@@ -266,7 +266,7 @@ const ViewOrders: NextPage = () => {
             </div>
 
             {/* Role pills */}
-            <div className="flex gap-1 shrink-0">
+            <div className="flex flex-wrap gap-1 shrink-0">
               {["all", "buyer", "seller"].map(role => (
                 <button
                   key={role}
@@ -477,8 +477,8 @@ const ViewOrders: NextPage = () => {
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-base-200 flex flex-col md:flex-row justify-between items-center gap-4">
-                      <div className="flex gap-8">
+                    <div className="mt-4 pt-4 border-t border-base-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+                      <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
                         <div>
                           <span className="text-[10px] font-bold uppercase opacity-40 block mb-1">Buyer</span>
                           <Address address={order.buyer} size="sm" />

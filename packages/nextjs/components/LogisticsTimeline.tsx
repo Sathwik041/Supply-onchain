@@ -80,7 +80,7 @@ const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, is
   };
 
   return (
-    <div className="w-full py-1 px-4 bg-base-100 rounded-sm shadow-md border border-secondary/10 relative">
+    <div className="w-full py-1 px-2 sm:px-4 bg-base-100 rounded-sm shadow-md border border-secondary/10 relative overflow-hidden">
       {isPaused && (
         <div className="absolute top-2 right-2 flex items-center gap-2 px-3 py-1 bg-warning/20 text-warning rounded-full border border-warning/30 z-20">
           <div className="w-2 h-2 bg-warning rounded-full animate-ping"></div>
@@ -111,7 +111,7 @@ const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, is
           }}
         ></div>
 
-        <ul className="flex flex-col lg:flex-row justify-between w-full relative z-10 gap-8 lg:gap-0">
+        <ul className="flex flex-col lg:flex-row justify-between w-full relative z-10 gap-4 sm:gap-6 lg:gap-0">
           {steps.map((step, index) => {
             const currentIndex = steps.findIndex(s => s.status === currentStatus);
 
@@ -135,12 +135,13 @@ const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, is
                     currentStatus < EscrowStatus.COMPLETED)));
 
             return (
-              <li key={step.name} className={`flex-1 flex flex-col items-center transition-all duration-500`}>
-                <div className="flex flex-col items-center group relative w-full">
+              <li
+                key={step.name}
+                className={`flex-1 flex flex-row lg:flex-col items-center lg:items-center transition-all duration-500`}
+              >
+                <div className="flex flex-row lg:flex-col items-center lg:items-center group relative w-full gap-3 lg:gap-0">
                   {/* Vertical Line for Mobile (hidden on LG) */}
-                  {index !== steps.length - 1 && (
-                    <div className="absolute top-16 left-1/2 w-0.5 h-12 bg-base-300 -translate-x-1/2 lg:hidden"></div>
-                  )}
+                  {index !== steps.length - 1 && <div className="hidden lg:hidden"></div>}
 
                   {/* Percentage Tooltip */}
                   {step.percentage && (
@@ -159,13 +160,13 @@ const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, is
 
                   {/* Icon Node Container */}
                   <div
-                    className={`relative w-16 h-16 rounded-full flex items-center justify-center border-4 mb-3 transition-all duration-500 bg-base-100
+                    className={`relative w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center border-[3px] lg:border-4 mb-0 lg:mb-3 transition-all duration-500 bg-base-100 shrink-0
                       ${isReached ? "border-success text-success scale-100" : ""}
                       ${isActive ? "border-primary text-primary ring-4 ring-primary/20 animate-pulse scale-110" : ""}
                       ${!isReached && !isActive ? "border-base-300 text-base-content/30 scale-90" : ""}
                     `}
                   >
-                    <step.icon className="h-7 w-7" />
+                    <step.icon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-7 lg:w-7" />
 
                     {/* Status Badge overlay on the Icon */}
                     {isReached && (
@@ -176,14 +177,14 @@ const LogisticsTimeline: React.FC<LogisticsTimelineProps> = ({ currentStatus, is
                   </div>
 
                   {/* Label & Description */}
-                  <div className="text-center w-full px-2">
-                    <span className={`block font-bold text-sm tracking-tight ${getLabelClass(step.status)}`}>
+                  <div className="text-left lg:text-center w-full px-1 lg:px-2">
+                    <span className={`block font-bold text-xs sm:text-sm tracking-tight ${getLabelClass(step.status)}`}>
                       {step.name}
                     </span>
-                    <span className="block text-[10px] uppercase font-bold text-base-content/40 mt-1 tracking-wider">
+                    <span className="block text-[9px] sm:text-[10px] uppercase font-bold text-base-content/40 mt-0.5 lg:mt-1 tracking-wider">
                       {isReached ? "Completed" : isActive ? "Action Required" : "Pending"}
                     </span>
-                    <span className="block text-xs mt-1 text-base-content/60 font-medium max-w-[120px] mx-auto leading-tight">
+                    <span className="hidden lg:block text-xs mt-1 text-base-content/60 font-medium max-w-[120px] mx-auto leading-tight">
                       {step.description}
                     </span>
                   </div>

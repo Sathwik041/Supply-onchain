@@ -6,16 +6,16 @@ import type { NextPage } from "next";
 const Home: NextPage = () => {
   return (
     <>
-      <div className="flex items-center flex-col grow pt-10 px-4">
+      <div className="flex items-center flex-col grow pt-6 sm:pt-10 px-3 sm:px-4">
         <div className="max-w-5xl text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 tracking-tight">
             SUPPLY-ONCHAIN{" "}
-            <span className="text-primary text-2xl md:text-4xl lg:text-5xl block mt-2 text-balance">
+            <span className="text-primary text-lg sm:text-2xl md:text-4xl lg:text-5xl block mt-2 text-balance">
               Securing the Global Industrial Supply Chain
             </span>
           </h1>
 
-          <div className="mb-10 text-xl md:text-2xl text-base-content/80 space-y-4">
+          <div className="mb-6 sm:mb-10 text-base sm:text-xl md:text-2xl text-base-content/80 space-y-3 sm:space-y-4">
             <p>
               A robust, smart-contract-driven protocol designed to eliminate counterparty risk in global manufacturing
               and logistics for industrial assets.
@@ -32,17 +32,20 @@ const Home: NextPage = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
             <Link
               href="/dashboard"
-              className="btn btn-primary btn-lg px-12 text-xl shadow-lg hover:scale-105 transition-transform"
+              className="btn btn-primary btn-md sm:btn-lg px-8 sm:px-12 text-lg sm:text-xl shadow-lg hover:scale-105 transition-transform"
             >
               Get Started
             </Link>
-            <Link href="/about" className="btn btn-outline btn-lg px-12 text-xl hover:bg-primary/10">
+            <Link
+              href="/about"
+              className="btn btn-outline btn-md sm:btn-lg px-8 sm:px-12 text-lg sm:text-xl hover:bg-primary/10"
+            >
               Learn More
             </Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-4 max-w-6xl w-full px-4 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 mt-4 max-w-6xl w-full px-2 sm:px-4 mb-12 sm:mb-20">
           <div className="card bg-base-100 shadow-xl border border-secondary hover:scale-105 transition-transform">
             <div className="card-body">
               <h2 className="card-title text-primary">📦 For Buyers</h2>

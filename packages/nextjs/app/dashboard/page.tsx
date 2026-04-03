@@ -203,12 +203,12 @@ const Dashboard: NextPage = () => {
 
   return (
     <div className="flex flex-col grow bg-base-200 pb-20">
-      <div className="max-w-7xl w-full mx-auto px-4 mt-8">
+      <div className="max-w-7xl w-full mx-auto px-2 sm:px-4 mt-4 sm:mt-8">
         {/* ── Header ── */}
         <div className="flex items-center gap-3 mb-8">
-          <ChartBarIcon className="h-8 w-8 text-primary" />
+          <ChartBarIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold text-primary">Analytics Dashboard</h1>
+            <h1 className="text-xl sm:text-3xl font-bold text-primary">Analytics Dashboard</h1>
             <p className="text-sm opacity-50 mt-1">Real-time overview of your supply chain activity</p>
           </div>
         </div>
@@ -244,8 +244,8 @@ const Dashboard: NextPage = () => {
 
         {/* ── Quick Actions (Prominent Row) ── */}
         <div className="card bg-base-100 shadow-sm border border-secondary/10 rounded-sm mb-8">
-          <div className="card-body p-4 sm:p-5">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="card-body p-3 sm:p-4 md:p-5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
               <Link
                 href="/create"
                 className="btn btn-primary flex-1 hover:scale-[1.02] transition-transform flex gap-2 rounded-sm h-14"

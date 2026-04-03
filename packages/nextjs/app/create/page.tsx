@@ -268,7 +268,7 @@ const CreateContract: NextPage = () => {
 
   return (
     <div className="flex flex-col grow bg-base-200 pb-20 relative">
-      <div className="max-w-7xl w-full mx-auto px-4 mt-1">
+      <div className="max-w-7xl w-full mx-auto px-2 sm:px-4 mt-1">
         <div className="mb-6">
           <LogisticsTimeline currentStatus={status} isDraft={true} m1Pct={milestone1Pct} m2Pct={milestone2Pct} />
         </div>
@@ -278,7 +278,7 @@ const CreateContract: NextPage = () => {
             <CurrencyDollarIcon className="h-5 w-5" />
             Payment Milestones (Preset Schedules)
           </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
             <button
               className={`btn ${milestone1Pct === 30 && milestone2Pct === 50 ? "btn-primary" : "btn-outline border-base-300"}`}
               onClick={() => {
@@ -320,8 +320,8 @@ const CreateContract: NextPage = () => {
 
         <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-700">
           <div className="card bg-base-100 shadow-xl border border-secondary/20 flex-1 rounded-sm overflow-hidden">
-            <div className="card-body p-8 md:p-12">
-              <h2 className="card-title text-3xl text-primary mb-8 border-b pb-4 font-bold">
+            <div className="card-body p-4 sm:p-8 md:p-12">
+              <h2 className="card-title text-xl sm:text-2xl md:text-3xl text-primary mb-4 sm:mb-8 border-b pb-4 font-bold">
                 Create New Supply Chain Escrow
               </h2>
 
@@ -444,8 +444,8 @@ const CreateContract: NextPage = () => {
                     <PaperClipIcon className="h-5 w-5" />
                     Cargo & Terms
                   </h3>
-                  <div className="flex gap-4">
-                    <div className="form-control w-2/3">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="form-control w-full sm:w-2/3">
                       <label className="label">
                         <span className="label-text font-semibold">Item Name</span>
                       </label>
@@ -457,7 +457,7 @@ const CreateContract: NextPage = () => {
                         onChange={e => setItemName(e.target.value)}
                       />
                     </div>
-                    <div className="form-control w-1/3">
+                    <div className="form-control w-full sm:w-1/3">
                       <label className="label">
                         <span className="label-text font-semibold">Quantity</span>
                       </label>
@@ -544,12 +544,12 @@ const CreateContract: NextPage = () => {
                 </div>
               </div>
 
-              <div className="card-actions justify-end gap-4 mt-12 border-t pt-8">
-                <Link href="/dashboard" className="btn btn-ghost btn-lg rounded-sm">
+              <div className="card-actions flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-8 sm:mt-12 border-t pt-6 sm:pt-8">
+                <Link href="/dashboard" className="btn btn-ghost btn-md sm:btn-lg rounded-sm w-full sm:w-auto">
                   Discard Draft
                 </Link>
                 <button
-                  className={`btn btn-primary btn-lg px-12 shadow-lg flex gap-2 rounded-sm ${isDeploying ? "loading" : ""}`}
+                  className={`btn btn-primary btn-md sm:btn-lg px-6 sm:px-12 shadow-lg flex gap-2 rounded-sm w-full sm:w-auto ${isDeploying ? "loading" : ""}`}
                   onClick={handleDeploy}
                   disabled={isDeploying}
                 >
