@@ -10,7 +10,7 @@ const Home: NextPage = () => {
         <div className="max-w-5xl text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
             SUPPLY-ONCHAIN{" "}
-            <span className="text-primary text-2xl md:text-4xl lg:text-5xl block mt-2 whitespace-nowrap">
+            <span className="text-primary text-2xl md:text-4xl lg:text-5xl block mt-2 text-balance">
               Securing the Global Industrial Supply Chain
             </span>
           </h1>

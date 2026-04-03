@@ -278,7 +278,7 @@ const CreateContract: NextPage = () => {
             <CurrencyDollarIcon className="h-5 w-5" />
             Payment Milestones (Preset Schedules)
           </h4>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               className={`btn ${milestone1Pct === 30 && milestone2Pct === 50 ? "btn-primary" : "btn-outline border-base-300"}`}
               onClick={() => {

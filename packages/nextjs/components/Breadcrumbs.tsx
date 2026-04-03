@@ -34,7 +34,7 @@ export const Breadcrumbs = () => {
   return (
     <div className="w-full px-4 sm:px-6 py-4 bg-transparent z-10 sticky top-0 md:static">
       <nav className="flex max-w-7xl mx-auto" aria-label="Breadcrumb">
-        <ol role="list" className="flex items-center space-x-2">
+        <ol role="list" className="flex flex-wrap items-center gap-x-2 gap-y-2">
           {breadcrumbItems.map((item, index) => {
             const isLast = index === breadcrumbItems.length - 1;
             const isFirst = index === 0;
