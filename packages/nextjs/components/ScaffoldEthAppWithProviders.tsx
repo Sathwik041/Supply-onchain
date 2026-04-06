@@ -37,10 +37,24 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <div className={`flex flex-col min-h-screen `}>
-        <Header />
-        <Breadcrumbs />
-        <main className="relative flex flex-col flex-1">{children}</main>
-        <Footer />
+        {/* Dynamic Glowing Orbs Background */}
+        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+          <div className="absolute -top-[20%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-primary/10 blur-[100px] animate-pulse"></div>
+          <div
+            className="absolute top-[20%] -right-[10%] w-[40vw] h-[60vw] rounded-full bg-accent/10 blur-[120px] animate-pulse"
+            style={{ animationDelay: "2s" }}
+          ></div>
+          <div
+            className="absolute -bottom-[20%] left-[20%] w-[60vw] h-[50vw] rounded-full bg-secondary/10 blur-[150px] animate-pulse"
+            style={{ animationDelay: "4s" }}
+          ></div>
+        </div>
+        <div className="z-10 flex flex-col flex-1">
+          <Header />
+          <Breadcrumbs />
+          <main className="relative flex flex-col flex-1">{children}</main>
+          <Footer />
+        </div>
       </div>
       <Toaster />
     </>

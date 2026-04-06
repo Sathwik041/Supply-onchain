@@ -98,12 +98,12 @@ const MachinePassports: NextPage = () => {
         </h1>
 
         {!connectedAddress ? (
-          <div className="card bg-base-100 shadow-xl border border-secondary/20 p-20 text-center rounded-sm">
+          <div className="card bg-base-100 shadow-xl border border-base-content/10 p-20 text-center rounded-sm">
             <h2 className="text-2xl font-bold opacity-50 mb-2">Connect Your Wallet</h2>
             <p className="opacity-40 text-lg">Please connect your wallet to view your owned passports.</p>
           </div>
         ) : passports.length === 0 ? (
-          <div className="card bg-base-100 shadow-xl border border-secondary/20 p-20 text-center rounded-sm">
+          <div className="card bg-base-100 shadow-xl border border-base-content/10 p-20 text-center rounded-sm">
             <div className="flex justify-center mb-6">
               <IdentificationIcon className="h-16 w-16 opacity-10 text-secondary" />
             </div>

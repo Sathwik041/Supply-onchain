@@ -223,7 +223,7 @@ const ViewOrders: NextPage = () => {
         </div>
 
         {/* ── Filter Bar ── */}
-        <div className="bg-base-100 border border-secondary/20 rounded-sm shadow-sm mb-6">
+        <div className="bg-base-100 border border-base-content/10 rounded-sm shadow-sm mb-6">
           {/* Row 1: Tabs · Search · Filters toggle */}
           <div className="flex flex-col gap-3 p-2 sm:p-3">
             {/* Tabs */}
@@ -403,7 +403,7 @@ const ViewOrders: NextPage = () => {
             <ArrowPathIcon className="h-12 w-12 animate-spin text-primary opacity-50" />
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="card bg-base-100 shadow-xl border border-secondary/20 p-20 text-center rounded-sm">
+          <div className="card bg-base-100 shadow-xl border border-base-content/10 p-20 text-center rounded-sm">
             <div className="flex justify-center mb-6">
               <CubeIcon className="h-16 w-16 opacity-10" />
             </div>
@@ -428,7 +428,7 @@ const ViewOrders: NextPage = () => {
                 <div
                   key={order.address}
                   onClick={() => router.push(`/orders/${order.address}`)}
-                  className="card bg-base-100 shadow-sm border border-secondary/20 hover:border-primary hover:shadow-md transition-all cursor-pointer group rounded-sm overflow-hidden"
+                  className="card bg-base-100 shadow-sm border border-base-content/10 hover:border-primary hover:shadow-md transition-all cursor-pointer group rounded-sm overflow-hidden"
                 >
                   <div className="card-body p-5">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

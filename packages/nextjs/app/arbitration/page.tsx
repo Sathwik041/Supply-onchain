@@ -139,7 +139,7 @@ const ArbitrationDashboard: NextPage = () => {
             <ArrowPathIcon className="h-12 w-12 animate-spin text-primary opacity-20" />
           </div>
         ) : disputedOrders.length === 0 ? (
-          <div className="card bg-base-100 shadow-xl border border-secondary/20 p-20 text-center rounded-sm">
+          <div className="card bg-base-100 shadow-xl border border-base-content/10 p-20 text-center rounded-sm">
             <div className="flex justify-center mb-6">
               <ScaleIcon className="h-16 w-16 opacity-10" />
             </div>

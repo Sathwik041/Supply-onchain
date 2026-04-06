@@ -82,7 +82,7 @@ const StatCard = ({
   icon: React.ComponentType<{ className?: string }>;
   accent?: string;
 }) => (
-  <div className="stat bg-base-100 shadow-sm border border-secondary/10 rounded-sm">
+  <div className="stat bg-base-100 shadow-sm border border-base-content/10 rounded-sm">
     <div className={`stat-figure ${accent || "text-primary"}`}>
       <Icon className="h-7 w-7 opacity-60" />
     </div>
@@ -182,7 +182,7 @@ const Dashboard: NextPage = () => {
   if (!connectedAddress) {
     return (
       <div className="flex flex-col items-center justify-center grow bg-base-200 pb-20">
-        <div className="card bg-base-100 shadow-xl border border-secondary/20 p-16 text-center rounded-sm max-w-lg">
+        <div className="card bg-base-100 shadow-xl border border-base-content/10 p-16 text-center rounded-sm max-w-lg">
           <WalletIcon className="h-16 w-16 mx-auto opacity-10 mb-6" />
           <h2 className="text-2xl font-bold opacity-60">Connect Your Wallet</h2>
           <p className="mt-3 opacity-40">Connect your wallet to view your analytics dashboard.</p>
@@ -214,7 +214,7 @@ const Dashboard: NextPage = () => {
         </div>
 
         {/* ── Hero Stats ── */}
-        <div className="stats stats-vertical lg:stats-horizontal w-full shadow-sm border border-secondary/10 rounded-sm mb-6">
+        <div className="stats stats-vertical lg:stats-horizontal w-full shadow-sm border border-base-content/10 rounded-sm mb-6">
           <StatCard
             title="Total Escrows"
             value={stats.totalEscrows}
@@ -243,7 +243,7 @@ const Dashboard: NextPage = () => {
         </div>
 
         {/* ── Quick Actions (Prominent Row) ── */}
-        <div className="card bg-base-100 shadow-sm border border-secondary/10 rounded-sm mb-8">
+        <div className="card bg-base-100 shadow-sm border border-base-content/10 rounded-sm mb-8">
           <div className="card-body p-3 sm:p-4 md:p-5">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
               <Link
@@ -293,7 +293,7 @@ const Dashboard: NextPage = () => {
         {/* ── Charts Row ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Order Activity — CSS Bar Chart */}
-          <div className="lg:col-span-2 card bg-base-100 shadow-sm border border-secondary/10 rounded-sm">
+          <div className="lg:col-span-2 card bg-base-100 shadow-sm border border-base-content/10 rounded-sm">
             <div className="card-body p-5">
               <h2 className="card-title text-sm font-bold uppercase opacity-50">Order Activity</h2>
               {timelineData.length > 0 ? (
@@ -309,7 +309,7 @@ const Dashboard: NextPage = () => {
           </div>
 
           {/* Status Breakdown — CSS Donut + Progress Bars */}
-          <div className="card bg-base-100 shadow-sm border border-secondary/10 rounded-sm">
+          <div className="card bg-base-100 shadow-sm border border-base-content/10 rounded-sm">
             <div className="card-body p-5">
               <h2 className="card-title text-sm font-bold uppercase opacity-50">Status Breakdown</h2>
               {statusBreakdown.length > 0 ? (
@@ -342,7 +342,7 @@ const Dashboard: NextPage = () => {
         {/* ── Financial Summary + Recent Activity ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Financial Summary */}
-          <div className="card bg-base-100 shadow-sm border border-secondary/10 rounded-sm">
+          <div className="card bg-base-100 shadow-sm border border-base-content/10 rounded-sm">
             <div className="card-body p-5">
               <h2 className="card-title text-sm font-bold uppercase opacity-50">Financial Summary</h2>
               <div className="mt-4 space-y-4">
@@ -372,7 +372,7 @@ const Dashboard: NextPage = () => {
           </div>
 
           {/* Recent Activity Feed */}
-          <div className="lg:col-span-2 card bg-base-100 shadow-sm border border-secondary/10 rounded-sm">
+          <div className="lg:col-span-2 card bg-base-100 shadow-sm border border-base-content/10 rounded-sm">
             <div className="card-body p-5">
               <h2 className="card-title text-sm font-bold uppercase opacity-50">Recent Activity</h2>
               {recentActivity.length > 0 ? (

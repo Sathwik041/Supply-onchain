@@ -360,7 +360,7 @@ const OrderManagement: NextPage = () => {
           <LogisticsTimeline currentStatus={timelineStatus} isPaused={order.disputed} m1Pct={m1Pct} m2Pct={m2Pct} />
         </div>
 
-        <div className="card bg-base-100 shadow-xl border border-secondary/20 rounded-sm overflow-hidden">
+        <div className="card bg-base-100 shadow-xl border border-base-content/10 rounded-sm overflow-hidden">
           <div className="card-body p-0">
             <OrderHeader
               order={order}

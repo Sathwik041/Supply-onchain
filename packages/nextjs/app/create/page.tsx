@@ -273,7 +273,7 @@ const CreateContract: NextPage = () => {
           <LogisticsTimeline currentStatus={status} isDraft={true} m1Pct={milestone1Pct} m2Pct={milestone2Pct} />
         </div>
 
-        <div className="mb-6 card bg-base-100 shadow-lg border border-secondary/20 p-6 rounded-sm animate-in fade-in duration-700 delay-100">
+        <div className="mb-6 card bg-base-100 shadow-lg border border-base-content/10 p-6 rounded-sm animate-in fade-in duration-700 delay-100">
           <h4 className="text-sm font-bold uppercase opacity-50 mb-4 pb-2 border-b flex items-center gap-2">
             <CurrencyDollarIcon className="h-5 w-5" />
             Payment Milestones (Preset Schedules)
@@ -319,7 +319,7 @@ const CreateContract: NextPage = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-700">
-          <div className="card bg-base-100 shadow-xl border border-secondary/20 flex-1 rounded-sm overflow-hidden">
+          <div className="card bg-base-100 shadow-xl border border-base-content/10 flex-1 rounded-sm overflow-hidden">
             <div className="card-body p-4 sm:p-8 md:p-12">
               <h2 className="card-title text-xl sm:text-2xl md:text-3xl text-primary mb-4 sm:mb-8 border-b pb-4 font-bold">
                 Create New Supply Chain Escrow
@@ -608,7 +608,7 @@ const CreateContract: NextPage = () => {
                 </div>
               </div>
 
-              <div className="card bg-base-100 shadow-lg border border-secondary/20 p-4 rounded-sm">
+              <div className="card bg-base-100 shadow-lg border border-base-content/10 p-4 rounded-sm">
                 <h4 className="text-xs font-bold uppercase opacity-50 mb-3 border-b pb-2">Deployment Status</h4>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-sm">
