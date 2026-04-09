@@ -124,6 +124,10 @@ const ViewOrders: NextPage = () => {
 
             const [buyer, seller, itemName, totalAmount, status, createdAt] = results.map(r => r.result);
 
+            if (results.some(r => r.status === "failure")) {
+              return null; // Ignore unindexed contracts
+            }
+
             return {
               address: addr,
               buyer: buyer as string,
@@ -135,7 +139,8 @@ const ViewOrders: NextPage = () => {
             };
           }),
         );
-        setOrders(fetchedOrders);
+        const validOrders = fetchedOrders.filter((order): order is NonNullable<typeof order> => order !== null);
+        setOrders(validOrders);
       } catch (error) {
         console.error("Error fetching order details:", error);
       } finally {

@@ -81,6 +81,14 @@ const OrderManagement: NextPage = () => {
         ],
       });
 
+      if (results.some(r => r.status === "failure")) {
+        console.warn("Contract not fully synced or multicall failed, retrying...");
+        setTimeout(() => {
+          fetchOrderDetails();
+        }, 2000);
+        return; // Skip setting order, stay in loading state
+      }
+
       const [
         buyer,
         seller,
@@ -137,7 +145,7 @@ const OrderManagement: NextPage = () => {
         completed: completed as boolean,
         disputed: disputed as boolean,
         shippingCid: shippingCidFromContract as string,
-        productionLogs: productionLogsFromContract as string[],
+        productionLogs: (productionLogsFromContract || []) as string[],
         createdAt: createdAtFromContract as bigint,
         disputeReason: disputeReasonFromContract as string,
         deposited: depositedFromContract as boolean,
