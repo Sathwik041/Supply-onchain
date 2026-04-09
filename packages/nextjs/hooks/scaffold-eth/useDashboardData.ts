@@ -85,6 +85,8 @@ export function useDashboardData() {
   }, [buyerEscrows, sellerEscrows]);
 
   useEffect(() => {
+    let active = true;
+
     const fetchAll = async () => {
       if (!allAddresses.length || !publicClient) {
         setEscrows([]);
@@ -96,6 +98,8 @@ export function useDashboardData() {
       if (!escrowAbi) return;
 
       setIsLoading(true);
+      let needsRetry = false;
+
       try {
         const results = await Promise.all(
           allAddresses.map(async addr => {
@@ -126,6 +130,7 @@ export function useDashboardData() {
               const results = await Promise.all(fetchPromises);
 
               if (results[0] === undefined) {
+                needsRetry = true;
                 return null;
               }
 
@@ -136,12 +141,12 @@ export function useDashboardData() {
                 buyer: buyer as string,
                 seller: seller as string,
                 itemName: itemName as string,
-                totalAmount: totalAmount as bigint,
-                totalAmountMON: formatEther(totalAmount as bigint),
-                status: Number(status),
-                createdAt: Number(createdAt),
-                deliveredAt: Number(deliveredAt),
-                quantity: Number(quantity),
+                totalAmount: (totalAmount as bigint) || 0n,
+                totalAmountMON: formatEther((totalAmount as bigint) || 0n),
+                status: Number(status || 0),
+                createdAt: Number(createdAt || 0),
+                deliveredAt: Number(deliveredAt || 0),
+                quantity: Number(quantity || 0),
               };
             } catch {
               return null;
@@ -149,15 +154,27 @@ export function useDashboardData() {
           }),
         );
 
-        setEscrows(results.filter((r): r is EscrowDetail => r !== null));
+        if (active) {
+          setEscrows(results.filter((r): r is EscrowDetail => r !== null));
+        }
+
+        if (needsRetry && active) {
+          setTimeout(fetchAll, 2500);
+        }
       } catch (error) {
         console.error("Dashboard fetch error:", error);
       } finally {
-        setIsLoading(false);
+        if (active && (!needsRetry || escrows.length > 0)) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchAll();
+
+    return () => {
+      active = false;
+    };
   }, [allAddresses, publicClient]);
 
   // ─── Derived Stats ────────────────────────────────────────────────────
