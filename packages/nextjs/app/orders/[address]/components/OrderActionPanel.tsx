@@ -243,21 +243,56 @@ export function OrderActionPanel({
           />
 
           {isBuyer && (
-            <div className="bg-primary/10 p-6 rounded-sm border border-primary/20 text-center animate-in zoom-in-95 duration-500">
-              <CheckCircleIcon className="h-12 w-12 text-primary mx-auto mb-2" />
-              <h3 className="font-bold text-xl mb-2">Confirm Delivery & Release Phase 2</h3>
-              <p className="text-sm opacity-80 mb-6 max-w-sm mx-auto">
-                Once the machinery arrives and is physically secured, confirm delivery here to release the next{" "}
-                {order.milestone2Pct || 50}% ({milestone2} MON) to the manufacturer.
-              </p>
-              <button
-                className="btn btn-primary btn-wide rounded-sm shadow-xl"
-                onClick={() => handleAction("confirmDelivery")}
-                disabled={isActionLoading}
-              >
-                {isActionLoading && <span className="loading loading-spinner loading-sm"></span>}
-                {isActionLoading ? "Processing..." : `I Have Received the Item (-${milestone2} MON)`}
-              </button>
+            <div className="relative group overflow-hidden bg-base-100 rounded-sm border border-base-content/10 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
+              {/* Decorative Background Blob */}
+              <div className="absolute -top-24 -right-24 h-64 w-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-1000" />
+
+              <div className="relative p-8 sm:p-12 text-center z-10">
+                <div className="inline-flex relative mb-8">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping opacity-20" />
+                  <div className="relative p-4 bg-primary/10 rounded-full">
+                    <CheckCircleIcon className="h-10 w-10 text-primary" />
+                  </div>
+                </div>
+
+                <h3 className="text-2xl sm:text-3xl font-black mb-4 tracking-tight">Confirm Secure Delivery</h3>
+                <p className="text-sm sm:text-base opacity-70 mb-10 max-w-sm mx-auto leading-relaxed">
+                  Physically inspected the shipment? Confirming will release the next milestone payment to the seller.
+                </p>
+
+                {/* Release Preview Card */}
+                <div className="flex flex-col items-center justify-center p-6 bg-base-200/50 backdrop-blur-md rounded-sm border border-base-content/5 mb-10 w-full max-w-sm mx-auto group/stats hover:border-primary/30 transition-all duration-500">
+                  <span className="text-[10px] uppercase font-black tracking-[0.2em] opacity-40 mb-2">
+                    Milestone 2 Release
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-black text-primary">{milestone2}</span>
+                    <span className="text-sm font-bold opacity-40">MON</span>
+                  </div>
+                  <div className="mt-2 px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full">
+                    {order.milestone2Pct || 50}% of Total
+                  </div>
+                </div>
+
+                <button
+                  className="btn btn-primary btn-lg px-12 h-16 rounded-sm shadow-[0_0_40px_-10px_rgba(var(--p),0.4)] hover:shadow-[0_0_60px_-10px_rgba(var(--p),0.6)] transition-all duration-500 group/btn"
+                  onClick={() => handleAction("confirmDelivery")}
+                  disabled={isActionLoading}
+                >
+                  {isActionLoading ? (
+                    <span className="loading loading-spinner loading-md"></span>
+                  ) : (
+                    <>
+                      <ShieldCheckIcon className="h-6 w-6 mr-2 group-hover/btn:scale-110 transition-transform" />
+                      Complete Delivery Receipt
+                    </>
+                  )}
+                </button>
+
+                <p className="mt-6 text-[11px] font-medium opacity-40 uppercase tracking-widest leading-none">
+                  SECURED BY SMART CONTRACT ESCROW
+                </p>
+              </div>
             </div>
           )}
         </div>
