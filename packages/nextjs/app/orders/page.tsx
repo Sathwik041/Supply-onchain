@@ -111,30 +111,33 @@ const ViewOrders: NextPage = () => {
           allEscrowAddresses.map(async addr => {
             const contract = { address: addr as `0x${string}`, abi: escrowAbi } as const;
 
-            const results = await publicClient.multicall({
-              contracts: [
-                { ...contract, functionName: "buyer", args: [] },
-                { ...contract, functionName: "seller", args: [] },
-                { ...contract, functionName: "itemName", args: [] },
-                { ...contract, functionName: "totalAmount", args: [] },
-                { ...contract, functionName: "status", args: [] },
-                { ...contract, functionName: "createdAt", args: [] },
-              ],
-            });
+            const calls = ["buyer", "seller", "itemName", "totalAmount", "status", "createdAt"] as const;
 
-            const [buyer, seller, itemName, totalAmount, status, createdAt] = results.map(r => r.result);
+            const fetchPromises = calls.map(functionName =>
+              publicClient
+                .readContract({
+                  ...contract,
+                  functionName: functionName as any,
+                  args: [],
+                })
+                .catch(() => undefined),
+            );
 
-            if (results.some(r => r.status === "failure")) {
-              return null; // Ignore unindexed contracts
+            const results = await Promise.all(fetchPromises);
+
+            if (results[0] === undefined) {
+              return null; // Ignore completely unreadable contracts
             }
+
+            const [buyer, seller, itemName, totalAmount, status, createdAt] = results;
 
             return {
               address: addr,
               buyer: buyer as string,
               seller: seller as string,
               item: itemName as string,
-              amount: formatEther(totalAmount as bigint),
-              status: Number(status),
+              amount: formatEther((totalAmount as bigint) || 0n),
+              status: Number(status || 0),
               createdAt: createdAt as bigint,
             };
           }),

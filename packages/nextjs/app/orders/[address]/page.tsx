@@ -54,35 +54,49 @@ const OrderManagement: NextPage = () => {
       const addr = contractAddress as `0x${string}`;
       const contract = { address: addr, abi: escrowAbi } as const;
 
-      const results = await publicClient.multicall({
-        contracts: [
-          { ...contract, functionName: "buyer", args: [] },
-          { ...contract, functionName: "seller", args: [] },
-          { ...contract, functionName: "arbitrator", args: [] },
-          { ...contract, functionName: "itemName", args: [] },
-          { ...contract, functionName: "totalAmount", args: [] },
-          { ...contract, functionName: "status", args: [] },
-          { ...contract, functionName: "poCid", args: [] },
-          { ...contract, functionName: "sellerAccepted", args: [] },
-          { ...contract, functionName: "shipped", args: [] },
-          { ...contract, functionName: "shippingProvider", args: [] },
-          { ...contract, functionName: "trackingNumber", args: [] },
-          { ...contract, functionName: "delivered", args: [] },
-          { ...contract, functionName: "deliveredAt", args: [] },
-          { ...contract, functionName: "completed", args: [] },
-          { ...contract, functionName: "disputed", args: [] },
-          { ...contract, functionName: "shippingCid", args: [] },
-          { ...contract, functionName: "getProductionLogs", args: [] },
-          { ...contract, functionName: "createdAt", args: [] },
-          { ...contract, functionName: "disputeReason", args: [] },
-          { ...contract, functionName: "deposited", args: [] },
-          { ...contract, functionName: "milestone1Pct", args: [] },
-          { ...contract, functionName: "milestone2Pct", args: [] },
-        ],
-      });
+      const calls = [
+        "buyer",
+        "seller",
+        "arbitrator",
+        "itemName",
+        "totalAmount",
+        "status",
+        "poCid",
+        "sellerAccepted",
+        "shipped",
+        "shippingProvider",
+        "trackingNumber",
+        "delivered",
+        "deliveredAt",
+        "completed",
+        "disputed",
+        "shippingCid",
+        "getProductionLogs",
+        "createdAt",
+        "disputeReason",
+        "deposited",
+        "milestone1Pct",
+        "milestone2Pct",
+      ] as const;
 
-      if (results.some(r => r.status === "failure")) {
-        console.warn("Contract not fully synced or multicall failed, retrying...");
+      const fetchPromises = calls.map(functionName =>
+        publicClient
+          .readContract({
+            ...contract,
+            functionName: functionName as any,
+            args: [],
+          })
+          .catch(e => {
+            console.warn(`Failed to read ${functionName}`, e.message);
+            return undefined;
+          }),
+      );
+
+      const results = await Promise.all(fetchPromises);
+
+      // If buyer is undefined, the contract is completely unreadable right now
+      if (results[0] === undefined) {
+        console.warn("Contract not fully synced or reads returning undefined, retrying...");
         setTimeout(() => {
           fetchOrderDetails();
         }, 2000);
@@ -112,7 +126,7 @@ const OrderManagement: NextPage = () => {
         depositedFromContract,
         milestone1PctFromContract,
         milestone2PctFromContract,
-      ] = results.map(r => r.result);
+      ] = results;
 
       let metadata = null;
       try {
@@ -133,8 +147,8 @@ const OrderManagement: NextPage = () => {
         seller: seller as string,
         arbitrator: arbitrator as string,
         item: itemName as string,
-        amount: formatEther(totalAmount as bigint),
-        status: Number(status),
+        amount: formatEther((totalAmount as bigint) || 0n),
+        status: Number(status || 0),
         poCid: poCid as string,
         sellerAccepted: sellerAccepted as boolean,
         shipped: shipped as boolean,
@@ -153,11 +167,13 @@ const OrderManagement: NextPage = () => {
         milestone2Pct: milestone2PctFromContract ? Number(milestone2PctFromContract) : undefined,
         metadata: metadata,
       });
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching order details:", error);
-      toast.error("Failed to fetch order from blockchain.");
-    } finally {
-      setLoading(false);
+      // Always retry a few times behind the scenes if it fails right on page load
+      setTimeout(() => {
+        fetchOrderDetails();
+      }, 2000);
     }
   }, [contractAddress, publicClient]);
 
