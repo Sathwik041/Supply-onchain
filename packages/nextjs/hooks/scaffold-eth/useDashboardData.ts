@@ -102,21 +102,34 @@ export function useDashboardData() {
             try {
               const contract = { address: addr as `0x${string}`, abi: escrowAbi } as const;
 
-              const multicallResults = await publicClient.multicall({
-                contracts: [
-                  { ...contract, functionName: "buyer", args: [] },
-                  { ...contract, functionName: "seller", args: [] },
-                  { ...contract, functionName: "itemName", args: [] },
-                  { ...contract, functionName: "totalAmount", args: [] },
-                  { ...contract, functionName: "status", args: [] },
-                  { ...contract, functionName: "createdAt", args: [] },
-                  { ...contract, functionName: "deliveredAt", args: [] },
-                  { ...contract, functionName: "quantity", args: [] },
-                ],
-              });
+              const calls = [
+                "buyer",
+                "seller",
+                "itemName",
+                "totalAmount",
+                "status",
+                "createdAt",
+                "deliveredAt",
+                "quantity",
+              ] as const;
 
-              const [buyer, seller, itemName, totalAmount, status, createdAt, deliveredAt, quantity] =
-                multicallResults.map(r => r.result);
+              const fetchPromises = calls.map(functionName =>
+                publicClient
+                  .readContract({
+                    ...contract,
+                    functionName: functionName as any,
+                    args: [],
+                  })
+                  .catch(() => undefined),
+              );
+
+              const results = await Promise.all(fetchPromises);
+
+              if (results[0] === undefined) {
+                return null;
+              }
+
+              const [buyer, seller, itemName, totalAmount, status, createdAt, deliveredAt, quantity] = results;
 
               return {
                 address: addr,
